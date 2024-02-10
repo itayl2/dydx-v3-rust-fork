@@ -108,12 +108,17 @@ impl Onboarding<'_> {
         match response {
             Ok(response) => match response.status() {
                 StatusCode::OK | StatusCode::CREATED => {
-                    return Ok(response.json::<T>().await.unwrap())
+                    // return Ok(response.json::<T>().await.unwrap())
+                    return match response.json::<T>().await {
+                        Ok(r) => Ok(r),
+                        Err(e) => Err(Box::new(e)),
+                    };
                 }
                 _ => {
                     let error = ResponseError {
                         code: response.status().to_string(),
-                        message: response.text().await.unwrap(),
+                        // message: response.text().await.unwrap(),
+                        message: response.text().await.unwrap_or_else(|e| e.to_string()),
                     };
                     return Err(Box::new(error));
                 }
