@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
 use std::path::Path;
+use crate::modules::eth_sign::eth_path_fix;
 
 pub fn stark_path_fix() -> String {
     match option_env!("ITAY_PY_RUST_ROOT") {
@@ -25,7 +26,8 @@ pub fn sign_order(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(&stark_path_fix());
+    let binding = stark_path_fix();
+    let path = Path::new(&binding);
     println!("sign_order path: {:?}", path);
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
@@ -62,7 +64,8 @@ pub fn sign_withdraw(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(&stark_path_fix());
+    let binding = stark_path_fix();
+    let path = Path::new(&binding);
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -101,7 +104,8 @@ pub fn sign_fast_withdraw(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(&stark_path_fix());
+    let binding = stark_path_fix();
+    let path = Path::new(&binding);
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -142,7 +146,8 @@ pub fn sign_transfer(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(&stark_path_fix());
+    let binding = stark_path_fix();
+    let path = Path::new(&binding);
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
