@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
 use std::path::Path;
+use crate::modules::stark_sign::path_fix;
 
 pub fn sign_private(
     network_id: usize,
@@ -13,7 +14,7 @@ pub fn sign_private(
     expiration_epoch_seconds: &str,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -34,7 +35,7 @@ pub fn sign_private(
             ),
         )
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
@@ -44,7 +45,7 @@ pub fn sign_onboarding(
     action: &str,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -54,12 +55,12 @@ pub fn sign_onboarding(
             .into();
         app.call1(py, (network_id, ethereum_address, action, private_key))
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
 pub fn derive_stark_private_key(signature: String) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -69,12 +70,12 @@ pub fn derive_stark_private_key(signature: String) -> PyResult<String> {
             .into();
         app.call1(py, (signature,))
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
 pub fn derive_secret(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -84,12 +85,12 @@ pub fn derive_secret(hex_value: String) -> PyResult<String> {
             .into();
         app.call1(py, (hex_value,))
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
 pub fn derive_passphrase(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -99,12 +100,12 @@ pub fn derive_passphrase(hex_value: String) -> PyResult<String> {
             .into();
         app.call1(py, (hex_value,))
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
 pub fn derive_key(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing"));
+    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -114,6 +115,6 @@ pub fn derive_key(hex_value: String) -> PyResult<String> {
             .into();
         app.call1(py, (hex_value,))
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }

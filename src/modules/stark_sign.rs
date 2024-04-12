@@ -3,6 +3,13 @@ use pyo3::types::PyList;
 use std::fs;
 use std::path::Path;
 
+pub fn path_fix() -> String {
+    match option_env!("ITAY_PY_RUST_ROOT") {
+        Some(path) => path.to_string(),
+        None => env!("CARGO_MANIFEST_DIR").to_string()
+    }
+}
+
 pub fn sign_order(
     network_id: usize,
     market: &str,
@@ -15,7 +22,7 @@ pub fn sign_order(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/stark"));
+    let path = Path::new(concat!(path_fix(), "/src/stark"));
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -39,7 +46,7 @@ pub fn sign_order(
             ),
         )
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
@@ -51,7 +58,7 @@ pub fn sign_withdraw(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/stark"));
+    let path = Path::new(concat!(path_fix(), "/src/stark"));
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -90,7 +97,7 @@ pub fn sign_fast_withdraw(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/stark"));
+    let path = Path::new(concat!(path_fix(), "/src/stark"));
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -117,7 +124,7 @@ pub fn sign_fast_withdraw(
             ),
         )
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
 
@@ -131,7 +138,7 @@ pub fn sign_transfer(
     expiration_epoch_seconds: i64,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/stark"));
+    let path = Path::new(concat!(path_fix(), "/src/stark"));
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -153,6 +160,6 @@ pub fn sign_transfer(
             ),
         )
     });
-    
+
     Ok(from_python.unwrap().to_string())
 }
