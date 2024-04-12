@@ -6,7 +6,10 @@ use std::path::Path;
 pub fn path_fix() -> String {
     match option_env!("ITAY_PY_RUST_ROOT") {
         Some(path) => path.to_string(),
-        None => env!("CARGO_MANIFEST_DIR").to_string()
+        None => match std::env::var("ITAY_PY_RUST_ROOT") {
+            Some(path) => path,
+            None => env!("CARGO_MANIFEST_DIR")
+        }.to_string()
     }
 }
 
@@ -23,6 +26,7 @@ pub fn sign_order(
     private_key: &str,
 ) -> PyResult<String> {
     let path = Path::new(concat!(path_fix(), "/src/stark"));
+    println!("sign_order path: {:?}", path);
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
