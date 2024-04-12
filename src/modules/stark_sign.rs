@@ -9,7 +9,7 @@ pub fn path_fix() -> String {
         None => match std::env::var("ITAY_PY_RUST_ROOT") {
             Ok(path) => path,
             Err(_) => env!("CARGO_MANIFEST_DIR").to_string()
-        }.to_string()
+        }
     }
 }
 
