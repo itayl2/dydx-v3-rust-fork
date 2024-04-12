@@ -3,7 +3,16 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
 use std::path::Path;
-use crate::modules::stark_sign::path_fix;
+
+pub fn eth_path_fix() -> String {
+    match option_env!("ITAY_PY_RUST_ROOT") {
+        Some(path) => format!("{}/src/eth_signing", path),
+        None => match std::env::var("ITAY_PY_RUST_ROOT") {
+            Ok(path) => format!("{}/src/eth_signing", path),
+            Err(_) => concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing").to_string()
+        }
+    }
+}
 
 pub fn sign_private(
     network_id: usize,
@@ -14,7 +23,7 @@ pub fn sign_private(
     expiration_epoch_seconds: &str,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -45,7 +54,7 @@ pub fn sign_onboarding(
     action: &str,
     private_key: &str,
 ) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -60,7 +69,7 @@ pub fn sign_onboarding(
 }
 
 pub fn derive_stark_private_key(signature: String) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -75,7 +84,7 @@ pub fn derive_stark_private_key(signature: String) -> PyResult<String> {
 }
 
 pub fn derive_secret(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -90,7 +99,7 @@ pub fn derive_secret(hex_value: String) -> PyResult<String> {
 }
 
 pub fn derive_passphrase(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
@@ -105,7 +114,7 @@ pub fn derive_passphrase(hex_value: String) -> PyResult<String> {
 }
 
 pub fn derive_key(hex_value: String) -> PyResult<String> {
-    let path = Path::new(concat!(path_fix(), "/src/eth_signing"));
+    let path = Path::new(&eth_path_fix());
     let py_app = fs::read_to_string(path.join("eth_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;
