@@ -7,8 +7,8 @@ pub fn path_fix() -> String {
     match option_env!("ITAY_PY_RUST_ROOT") {
         Some(path) => path.to_string(),
         None => match std::env::var("ITAY_PY_RUST_ROOT") {
-            Some(path) => path,
-            None => env!("CARGO_MANIFEST_DIR")
+            Ok(path) => path,
+            Err(_) => env!("CARGO_MANIFEST_DIR").to_string()
         }.to_string()
     }
 }
