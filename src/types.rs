@@ -734,7 +734,7 @@ pub struct FillResponseObject {
     #[serde(rename = "type")]
     pub type_field: String,
     pub market: String,
-    pub order_id: String,
+    pub order_id: Option<String>,
     pub price: String,
     pub size: String,
     pub fee: String,
