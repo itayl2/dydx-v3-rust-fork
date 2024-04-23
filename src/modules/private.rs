@@ -607,7 +607,7 @@ impl<'a> Private<'a> {
         };
         let backoff = self.retry_backoff_getter.get(retry_snippet);
 
-        println!("Will use backoff: {backoff:?} for {retry_snippet:?}");
+        // println!("Will use backoff: {backoff:?} for {retry_snippet:?}");
         let closure = || async { self.request(path, Method::GET, parameters.clone(), data.clone()).await };
         let result = closure
             .retry(backoff)
