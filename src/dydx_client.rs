@@ -70,6 +70,15 @@ impl<'a> DydxClient<'a> {
         Box::new(FallbackBackoffGetter::default())
     }
 
+    pub fn get_fallback_backoff_getter_with_args(
+        factor: f32,
+        min_delay_ms: u64,
+        max_delay_ms: u64,
+        max_times: usize,
+    ) -> Box<FallbackBackoffGetter> {
+        Box::new(FallbackBackoffGetter::new(factor, min_delay_ms, max_delay_ms, max_times))
+    }
+
     pub fn get_no_backoff_getter() -> Box<NoBackoffGetter> {
         Box::new(NoBackoffGetter::default())
     }

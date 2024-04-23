@@ -42,6 +42,23 @@ pub struct FallbackBackoffGetter {
     backoff: ExponentialBuilder,
 }
 
+impl FallbackBackoffGetter {
+    pub fn new(
+        factor: f32,
+        min_delay_ms: u64,
+        max_delay_ms: u64,
+        max_times: usize,
+    ) -> Self {
+        FallbackBackoffGetter {
+            backoff: ExponentialBuilder::default()
+                .with_factor(factor)
+                .with_min_delay(Duration::from_millis(min_delay_ms))
+                .with_max_delay(Duration::from_millis(max_delay_ms))
+                .with_max_times(max_times),
+        }
+    }
+}
+
 impl Default for FallbackBackoffGetter {
     fn default() -> Self {
         FallbackBackoffGetter {
