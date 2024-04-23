@@ -32,8 +32,8 @@ pub struct DydxClient<'a> {
     pub onboarding: Option<Onboarding<'a>>,
 }
 
-impl<'a> DydxClient<'a> {
-    pub fn new(host: &'a str, mut _options: ClientOptions<'a>) -> Self {
+impl DydxClient<'_> {
+    pub fn new<'a>(host: &'a str, mut _options: ClientOptions<'a>) -> DydxClient<'a> {
         let mut _options = _options;
         let network_id = _options.network_id.unwrap_or(1);
         let api_timeout = _options.api_timeout.unwrap_or(10);
