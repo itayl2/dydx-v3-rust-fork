@@ -6,7 +6,7 @@ pub const COLLATERAL_TOKEN_DECIMALS: u8 = 6;
 
 pub const MAINNET_API_URL: &str = "https://api.dydx.exchange";
 pub const TESTNET_API_URL: &str = "https://api.stage.dydx.exchange";
-pub const TESTNET_NETWORK_ID: usize = 5; // Goerli
+pub const TESTNET_NETWORK_ID: usize = 11155111; // Goerli
 
 // chrome test account
 pub const TEST_ADDRESS: &str = "0x72Be8d8d7d1d10d0e7f12Df508bB29b33cFFA06B";

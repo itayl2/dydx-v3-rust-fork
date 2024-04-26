@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::fmt::Debug;
 use super::super::constants::*;
 use super::super::helper::*;
 use super::super::types::*;
@@ -11,6 +13,8 @@ use serde::Serialize;
 use serde_json::*;
 use sha2::Sha256;
 use std::time::Duration;
+use backon::Retryable;
+use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
 
 #[derive(Debug, Clone)]
 pub struct Private<'a> {
@@ -19,17 +23,21 @@ pub struct Private<'a> {
     network_id: usize,
     api_key_credentials: ApiKeyCredentials<'a>,
     stark_private_key: Option<&'a str>,
+    error_handler: Option<ErrorFn>,
+    retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>
 }
 
-impl Private<'_> {
-    pub fn new<'a>(
+impl<'a> Private<'a> {
+    pub fn new(
         host: &'a str,
         network_id: usize,
         api_timeout: u64,
         api_key_credentials: ApiKeyCredentials<'a>,
         stark_private_key: Option<&'a str>,
-    ) -> Private<'a> {
-        Private {
+        error_handler: Option<ErrorFn>,
+        retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>,
+    ) -> Box<Private<'a>> {
+        Box::new(Private {
             client: reqwest::ClientBuilder::new()
                 .timeout(Duration::from_secs(api_timeout))
                 .build()
@@ -38,26 +46,28 @@ impl Private<'_> {
             network_id,
             api_key_credentials,
             stark_private_key,
-        }
+            error_handler,
+            retry_backoff_getter,
+        })
     }
 
     pub async fn get_registration(&self) -> Result<RegistrationResponse> {
         let response = self
-            .request("registration", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("registration", Vec::new(), json!({}), Some("get_registration"))
             .await;
         response
     }
 
     pub async fn get_user(&self) -> Result<UserResponse> {
         let response = self
-            .request("users", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("users", Vec::new(), json!({}), Some("get_user"))
             .await;
         response
     }
 
     pub async fn get_api_keys(&self) -> Result<ApiKeysResponse> {
         let response = self
-            .request("api-keys", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("api-keys", Vec::new(), json!({}), Some("get_api_keys"))
             .await;
         response
     }
@@ -66,14 +76,14 @@ impl Private<'_> {
         let account_id = get_account_id(ethereum_address);
         let path = format!("accounts/{}", account_id);
         let response = self
-            .request(path.as_str(), Method::GET, Vec::new(), json!({}))
+            .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_account"))
             .await;
         response
     }
 
     pub async fn get_accounts(&self) -> Result<AccountsResponse> {
         let response = self
-            .request("accounts", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("accounts", Vec::new(), json!({}), Some("get_accounts"))
             .await;
         response
     }
@@ -112,7 +122,7 @@ impl Private<'_> {
         }
 
         let response = self
-            .request(path.as_str(), Method::GET, parameters, json!({}))
+            .retry_wrapper(path.as_str(), parameters, json!({}), Some("get_account_leaderboard_pnl"))
             .await;
         response
     }
@@ -130,7 +140,7 @@ impl Private<'_> {
         }
 
         let response = self
-            .request(path.as_str(), Method::GET, parameters, json!({}))
+            .retry_wrapper(path.as_str(), parameters, json!({}), Some("get_historical_leaderboard_pnls"))
             .await;
         response
     }
@@ -156,7 +166,7 @@ impl Private<'_> {
             parameters.push(("createdBeforeOrAt", local_var));
         }
         let response = self
-            .request("positions", Method::GET, parameters, json!({}))
+            .retry_wrapper("positions", parameters, json!({}), Some("get_positions"))
             .await;
         response
     }
@@ -347,7 +357,7 @@ impl Private<'_> {
             parameters.push(("createdBeforeOrAt", local_var));
         }
         let response = self
-            .request("transfers", Method::GET, Vec::new(), parameters)
+            .retry_wrapper("transfers", Vec::new(), parameters, Some("get_transfers"))
             .await;
         response
     }
@@ -404,7 +414,7 @@ impl Private<'_> {
             parameters.push(("return_latest_orders", local_var));
         }
         let response = self
-            .request("orders", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("orders", Vec::new(), json!({}), Some("get_orders"))
             .await;
         response
     }
@@ -423,7 +433,7 @@ impl Private<'_> {
             parameters.push(("id", local_var));
         }
         let response = self
-            .request("active-orders", Method::GET, parameters, json!({}))
+            .retry_wrapper("active-orders", parameters, json!({}), Some("get_active_orders"))
             .await;
         response
     }
@@ -431,7 +441,7 @@ impl Private<'_> {
     pub async fn get_order_by_id(&self, id: &str) -> Result<OrderResponse> {
         let path = format!("orders/{}", id);
         let response = self
-            .request(path.as_str(), Method::GET, Vec::new(), json!({}))
+            .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_order_by_id"))
             .await;
         response
     }
@@ -439,7 +449,7 @@ impl Private<'_> {
     pub async fn get_order_by_client_id(&self, id: &str) -> Result<OrderResponse> {
         let path = format!("orders/client/{}", id);
         let response = self
-            .request(path.as_str(), Method::GET, Vec::new(), json!({}))
+            .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_order_by_client_id"))
             .await;
         response
     }
@@ -465,7 +475,7 @@ impl Private<'_> {
             parameters.push(("createdBeforeOrAt", local_var));
         }
         let response = self
-            .request("fills", Method::GET, parameters, json!({}))
+            .retry_wrapper("fills", parameters, json!({}), Some("get_fills"))
             .await;
         response
     }
@@ -487,7 +497,7 @@ impl Private<'_> {
             parameters.push(("effectiveBeforeOrAt", local_var));
         }
         let response = self
-            .request("funding", Method::GET, parameters, json!({}))
+            .retry_wrapper("funding", parameters, json!({}), Some("get_funding_payments"))
             .await;
         response
     }
@@ -505,7 +515,7 @@ impl Private<'_> {
             parameters.push(("effectiveAtOrAfter", local_var));
         }
         let response = self
-            .request("historical-pnl", Method::GET, parameters, json!({}))
+            .retry_wrapper("historical-pnl", parameters, json!({}), Some("get_historical_pnl"))
             .await;
         response
     }
@@ -516,7 +526,7 @@ impl Private<'_> {
             parameters.push(("epoch", local_var));
         }
         let response = self
-            .request("rewards/weight", Method::GET, parameters, json!({}))
+            .retry_wrapper("rewards/weight", parameters, json!({}), Some("get_trading_rewards"))
             .await;
         response
     }
@@ -530,18 +540,18 @@ impl Private<'_> {
             parameters.push(("epoch", local_var));
         }
         let response = self
-            .request("rewards/liquidity", Method::GET, parameters, json!({}))
+            .retry_wrapper("rewards/liquidity", parameters, json!({}), Some("get_liquidity_provider_rewards"))
             .await;
         response
     }
 
     pub async fn get_retroactive_mining_rewards(&self) -> Result<RetroactiveMiningRewardsResponse> {
         let response = self
-            .request(
+            .retry_wrapper(
                 "rewards/retroactive-mining",
-                Method::GET,
                 Vec::new(),
                 json!({}),
+                Some("get_retroactive_mining_rewards"),
             )
             .await;
         response
@@ -561,7 +571,7 @@ impl Private<'_> {
 
     pub async fn get_profile(&self) -> Result<ProfilePrivateResponse> {
         let response = self
-            .request("profile/private", Method::GET, Vec::new(), json!({}))
+            .retry_wrapper("profile/private", Vec::new(), json!({}), Some("get_profile"))
             .await;
         response
     }
@@ -571,6 +581,41 @@ impl Private<'_> {
         let req_builder = self.client.put(url);
         let result = req_builder.send().await?;
         Ok(result.status())
+    }
+
+    pub fn retry_notify(&self, operation_name: &str, error: &Box<dyn std::error::Error>, delay: Duration) {
+        match self.error_handler {
+            Some(ref error_handler) => {
+                error_handler(operation_name, error, delay);
+            }
+            None => {
+                eprintln!("Error fetching data from dYdX API::{operation_name}: {error:?}, retrying in {delay:?}");
+            }
+        }
+    }
+
+    async fn retry_wrapper<T: for<'de> Deserialize<'de>, V: Serialize + Clone>(
+        &self,
+        path: &str,
+        parameters: Vec<(&str, &str)>,
+        data: V,
+        retry_snippet: Option<&str>,
+    ) -> Result<T> {
+        let retry_snippet = match retry_snippet {
+            Some(local_var) => local_var,
+            None => return self.request(path, Method::GET, parameters, data).await,
+        };
+        let backoff = self.retry_backoff_getter.get(retry_snippet);
+
+        // println!("Will use backoff: {backoff:?} for {retry_snippet:?}");
+        let closure = || async { self.request(path, Method::GET, parameters.clone(), data.clone()).await };
+        let result = closure
+            .retry(backoff)
+            .notify(|err: &Box<dyn std::error::Error>, dur: Duration| {
+                self.retry_notify(retry_snippet, err, dur);
+            })
+            .await;
+        result
     }
 
     async fn request<T: for<'de> Deserialize<'de>, V: Serialize>(
