@@ -880,7 +880,7 @@ pub struct TransferResponseObject {
     pub status: String,
     pub created_at: String,
     pub confirmed_at: Option<String>,
-    pub client_id: String,
+    pub client_id: Option<String>,
     pub from_address: Option<String>,
     pub to_address: Option<String>,
 }
