@@ -2,14 +2,16 @@ pub use super::super::types::*;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub fn eth_path_fix() -> String {
+    let compile_time_default_base = env!("CARGO_MANIFEST_DIR");
+    let compile_time_default = PathBuf::from(compile_time_default_base).join("src").join("eth_signing").to_string_lossy().parse().unwrap();
     match option_env!("ITAY_PY_RUST_ROOT") {
-        Some(path) => format!("{}/src/eth_signing", path),
+        Some(path) => PathBuf::from(path).join("src").join("eth_signing").to_string_lossy().parse().unwrap(),
         None => match std::env::var("ITAY_PY_RUST_ROOT") {
-            Ok(path) => format!("{}/src/eth_signing", path),
-            Err(_) => concat!(env!("CARGO_MANIFEST_DIR"), "/src/eth_signing").to_string()
+            Ok(path) => PathBuf::from(path).join("src").join("eth_signing").to_string_lossy().parse().unwrap(),
+            Err(_) => compile_time_default
         }
     }
 }
