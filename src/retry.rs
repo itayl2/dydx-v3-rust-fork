@@ -1,10 +1,8 @@
-use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
 use std::time::Duration;
-use serde::{Deserialize, Serialize, Deserializer};
-use serde_derive::{Deserialize as Deserialize_derive, Serialize as SerializeDerive};
+use serde::Deserializer;
 use backon::ExponentialBuilder;
 
 pub trait ErrorHandler {
@@ -18,24 +16,10 @@ pub fn default_error_handler(operation_name: &str, error: &Box<dyn Error>, delay
     eprintln!("Error fetching data from dYdX API::{operation_name}: {error:?}, retrying in {delay:?}");
 }
 
-pub trait ExponentialBuilderHelperGet {
+pub trait ExponentialBuilderHelperGet: Send + Sync + Debug {
     fn get(&self, key: &str) -> &ExponentialBuilder;
-    fn clone_box(&self) -> Box<dyn ExponentialBuilderHelperGet>;
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
 }
-
-impl Clone for Box<dyn ExponentialBuilderHelperGet> {
-    fn clone(&self) -> Box<dyn ExponentialBuilderHelperGet> {
-        self.clone_box()
-    }
-}
-
-impl Debug for Box<dyn ExponentialBuilderHelperGet> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.fmt(f)
-    }
-}
-
 
 #[derive(Debug, Clone)]
 pub struct FallbackBackoffGetter {
@@ -72,10 +56,6 @@ impl ExponentialBuilderHelperGet for FallbackBackoffGetter {
         &self.backoff
     }
 
-    fn clone_box(&self) -> Box<dyn ExponentialBuilderHelperGet> {
-        Box::new(self.clone())
-    }
-
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -106,10 +86,6 @@ impl Default for NoBackoffGetter {
 impl ExponentialBuilderHelperGet for NoBackoffGetter {
     fn get(&self, _: &str) -> &ExponentialBuilder {
         &self.backoff
-    }
-
-    fn clone_box(&self) -> Box<dyn ExponentialBuilderHelperGet> {
-        Box::new(self.clone())
     }
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

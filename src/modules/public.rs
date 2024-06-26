@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Debug;
+use std::sync::Arc;
 use super::super::{ResponseError, Result};
 use http::StatusCode;
 use serde::Deserialize;
@@ -15,7 +15,7 @@ pub use super::super::types::*;
 pub struct Public<'a> {
     client: reqwest::Client,
     error_handler: Option<ErrorFn>,
-    retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>,
+    retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>,
     pub host: &'a str,
 }
 
@@ -24,7 +24,7 @@ impl<'a> Public<'a> {
         host: &str,
         api_timeout: u64,
         error_handler: Option<ErrorFn>,
-        retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>,
+        retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>,
     ) -> Public {
         Public {
             client: reqwest::ClientBuilder::new()

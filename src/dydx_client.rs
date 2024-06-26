@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 use self::types::ApiKeyCredentials;
 
 pub use super::types;
@@ -17,8 +18,8 @@ pub struct ClientOptions<'a> {
     pub eth_private_key: Option<&'a str>,
     pub public_error_handler: Option<ErrorFn>, // Correct use of `dyn`
     pub private_error_handler: Option<ErrorFn>, // Correct use of `dyn`
-    pub public_backoff_getter: Option<Box<dyn ExponentialBuilderHelperGet>>,
-    pub private_backoff_getter: Option<Box<dyn ExponentialBuilderHelperGet>>,
+    pub public_backoff_getter: Option<Arc<dyn ExponentialBuilderHelperGet>>,
+    pub private_backoff_getter: Option<Arc<dyn ExponentialBuilderHelperGet>>,
 }
 
 #[readonly::make]
@@ -27,7 +28,7 @@ pub struct DydxClient<'a> {
     #[readonly]
     pub api_timeout: Option<u64>,
     pub public: Public<'a>,
-    pub private: Option<Box<Private<'a>>>,
+    pub private: Option<Arc<Private<'a>>>,
     pub eth_private: Option<EthPrivate<'a>>,
     pub onboarding: Option<Onboarding<'a>>,
 }
@@ -66,8 +67,8 @@ impl DydxClient<'_> {
         }
     }
 
-    pub fn get_fallback_backoff_getter() -> Box<FallbackBackoffGetter> {
-        Box::new(FallbackBackoffGetter::default())
+    pub fn get_fallback_backoff_getter() -> Arc<FallbackBackoffGetter> {
+        Arc::new(FallbackBackoffGetter::default())
     }
 
     pub fn get_fallback_backoff_getter_with_args(
@@ -75,11 +76,11 @@ impl DydxClient<'_> {
         min_delay_ms: u64,
         max_delay_ms: u64,
         max_times: usize,
-    ) -> Box<FallbackBackoffGetter> {
-        Box::new(FallbackBackoffGetter::new(factor, min_delay_ms, max_delay_ms, max_times))
+    ) -> Arc<FallbackBackoffGetter> {
+        Arc::new(FallbackBackoffGetter::new(factor, min_delay_ms, max_delay_ms, max_times))
     }
 
-    pub fn get_no_backoff_getter() -> Box<NoBackoffGetter> {
-        Box::new(NoBackoffGetter::default())
+    pub fn get_no_backoff_getter() -> Arc<NoBackoffGetter> {
+        Arc::new(NoBackoffGetter::default())
     }
 }

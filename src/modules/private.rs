@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::Arc;
 use super::super::constants::*;
 use super::super::helper::*;
 use super::super::types::*;
@@ -24,7 +24,7 @@ pub struct Private<'a> {
     api_key_credentials: ApiKeyCredentials<'a>,
     stark_private_key: Option<&'a str>,
     error_handler: Option<ErrorFn>,
-    retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>
+    retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>
 }
 
 impl<'a> Private<'a> {
@@ -35,9 +35,9 @@ impl<'a> Private<'a> {
         api_key_credentials: ApiKeyCredentials<'a>,
         stark_private_key: Option<&'a str>,
         error_handler: Option<ErrorFn>,
-        retry_backoff_getter: Box<dyn ExponentialBuilderHelperGet>,
-    ) -> Box<Private<'a>> {
-        Box::new(Private {
+        retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>,
+    ) -> Arc<Private<'a>> {
+        Arc::new(Private {
             client: reqwest::ClientBuilder::new()
                 .timeout(Duration::from_secs(api_timeout))
                 .build()
