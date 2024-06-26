@@ -1,15 +1,17 @@
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use crate::modules::eth_sign::eth_path_fix;
 
 pub fn stark_path_fix() -> String {
+    let compile_time_default_base = env!("CARGO_MANIFEST_DIR");
+    let compile_time_default = PathBuf::from(compile_time_default_base).join("src").join("stark").to_string_lossy().parse().unwrap();
     match option_env!("ITAY_PY_RUST_ROOT") {
-        Some(path) => format!("{}/src/stark", path),
+        Some(path) => PathBuf::from(path).join("src").join("stark").to_string_lossy().parse().unwrap(),
         None => match std::env::var("ITAY_PY_RUST_ROOT") {
-            Ok(path) => format!("{}/src/stark", path),
-            Err(_) => concat!(env!("CARGO_MANIFEST_DIR"), "/src/stark").to_string()
+            Ok(path) => PathBuf::from(path).join("src").join("stark").to_string_lossy().parse().unwrap(),
+            Err(_) => compile_time_default
         }
     }
 }
