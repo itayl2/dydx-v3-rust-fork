@@ -63,6 +63,47 @@ impl OrderType {
     pub const TAKE_PROFIT: &'static str = "TAKE_PROFIT";
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum OrderTypeEnum {
+    MARKET,
+    LIMIT,
+    STOP_LIMIT,
+    STOP_MARKET,
+    TRAILING_STOP,
+    TAKE_PROFIT,
+}
+
+impl OrderTypeEnum {
+    pub fn to_const(&self) -> &'static str {
+        match self {
+            OrderTypeEnum::MARKET => OrderType::MARKET,
+            OrderTypeEnum::LIMIT => OrderType::LIMIT,
+            OrderTypeEnum::STOP_LIMIT => OrderType::STOP_LIMIT,
+            OrderTypeEnum::STOP_MARKET => OrderType::STOP_MARKET,
+            OrderTypeEnum::TRAILING_STOP => OrderType::TRAILING_STOP,
+            OrderTypeEnum::TAKE_PROFIT => OrderType::TAKE_PROFIT,
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TimeInForceEnum {
+    GTT,
+    FOK,
+    IOC,
+}
+
+impl TimeInForceEnum {
+    pub fn to_const(&self) -> &'static str {
+        match self {
+            TimeInForceEnum::GTT => TimeInForce::GTT,
+            TimeInForceEnum::FOK => TimeInForce::FOK,
+            TimeInForceEnum::IOC => TimeInForce::IOC,
+        }
+    }
+}
+
 #[non_exhaustive]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeInForce;
