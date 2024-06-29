@@ -58,6 +58,7 @@ impl OrderType {
     pub const MARKET: &'static str = "MARKET";
     pub const LIMIT: &'static str = "LIMIT";
     pub const STOP_LIMIT: &'static str = "STOP_LIMIT";
+    pub const STOP_MARKET: &'static str = "STOP_MARKET";
     pub const TRAILING_STOP: &'static str = "TRAILING_STOP";
     pub const TAKE_PROFIT: &'static str = "TAKE_PROFIT";
 }
