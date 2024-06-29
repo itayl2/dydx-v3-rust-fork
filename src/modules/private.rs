@@ -171,6 +171,33 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub fn test_sign_order(&self) -> Result<()> {
+        let market = "BTC-USD";
+        let side = "BUY";
+        let position_id = "123";
+        let size = "1";
+        let price = "10000";
+        let limit_fee = "0.1";
+        let client_id = "123";
+        let expiration = 1610000000;
+
+        let signature = sign_order(
+            self.network_id,
+            market,
+            side,
+            position_id,
+            size,
+            price,
+            limit_fee,
+            client_id,
+            expiration,
+            self.stark_private_key.unwrap(),
+        )?;
+
+        println!("Signature: {:?}", signature);
+        Ok(())
+    }
+
     pub async fn create_order(&self, user_params: ApiOrderParams<'_>) -> Result<OrderResponse> {
         let client_id = if user_params.client_id.is_some() {
             user_params.client_id.unwrap().to_owned()
