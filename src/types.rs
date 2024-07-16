@@ -86,7 +86,6 @@ impl OrderTypeEnum {
     }
 }
 
-#[non_exhaustive]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TimeInForceEnum {
     GTT,

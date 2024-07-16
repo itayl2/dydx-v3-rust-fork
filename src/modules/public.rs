@@ -54,8 +54,7 @@ impl<'a> Public<'a> {
             parameter.push(("market", local_var));
         }
 
-        let response = self.get_retry_wrapper("markets", parameter.clone(), Some("get_markets")).await;
-        response
+        self.get_retry_wrapper("markets", parameter.clone(), Some("get_markets")).await
     }
 
 

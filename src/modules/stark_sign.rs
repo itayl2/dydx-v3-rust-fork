@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::fs;
 use std::path::{Path, PathBuf};
+// use pyo3::Python;
 use crate::modules::eth_sign::eth_path_fix;
 
 pub fn stark_path_fix() -> String {
@@ -31,6 +32,29 @@ pub fn sign_order(
     let binding = stark_path_fix();
     let path = Path::new(&binding);
     println!("sign_order path: {:?}", path);
+    // let py_args = format!(
+    //     "sign_order({}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
+    //     network_id,
+    //     market,
+    //     side,
+    //     position_id,
+    //     human_size,
+    //     human_price,
+    //     limit_fee,
+    //     client_id,
+    //     expiration_epoch_seconds,
+    //     private_key
+    // );
+    // println!("sign_order py_args: {py_args}");
+    // Python::with_gil(|py| {
+    //     // PyO3 supports Python 3.7 and up.
+    //     println!("py.version_info(): {:?}", py.version_info());
+    //     assert!(py.version_info() == (3, 9, 9));
+    //     // assert!(py.version_info() >= (3, 7, 0));
+    // });
+    // let gil = Python::acquire_gil();
+    // let py = gil.python();
+    // println!("Python path: {:?}", py.import("sys").unwrap().getattr("path").unwrap());
     let py_app = fs::read_to_string(path.join("stark_sign.py"))?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath: &PyList = py.import("sys")?.getattr("path")?.downcast::<PyList>()?;

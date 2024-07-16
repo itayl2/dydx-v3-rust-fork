@@ -19,7 +19,11 @@ from typing import Tuple
 
 import mpmath
 import sympy
-from sympy.core.numbers import igcdex
+try:
+    from sympy.core.numbers import igcdex
+except ImportError:
+    # otherwise didn't work on my macbook with python 3.9.9 in pyenv
+    from sympy.core.intfunc import igcdex
 
 # A type that represents a point (x,y) on an elliptic curve.
 ECPoint = Tuple[int, int]
