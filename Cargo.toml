@@ -12,6 +12,9 @@ repository = "https://github.com/junta/dydx-v3-rust"
 readme = "README.md"
 categories = ["api-bindings"]
 
+[features]
+dummy_signature = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -33,6 +36,7 @@ readonly = "0.2.0"
 rand = "0.8.5"
 backon = "0.4.4"
 serde_derive = "1.0.198"
+cfg-if = "1.0.0"
 
 [dev-dependencies]
 speculate = "0.1.2"

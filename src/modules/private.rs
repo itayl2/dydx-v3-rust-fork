@@ -205,19 +205,25 @@ impl<'a> Private<'a> {
             generate_random_client_id()
         };
 
-        let signature = sign_order(
-            self.network_id,
-            user_params.market,
-            user_params.side,
-            user_params.position_id,
-            user_params.size,
-            user_params.price,
-            user_params.limit_fee,
-            client_id.as_str(),
-            user_params.expiration,
-            self.stark_private_key.unwrap(),
-        )
-        .unwrap();
+        cfg_if::cfg_if! {
+        if #[cfg(feature = "dummy_signature")] {
+            let signature = "blabla".to_string();
+        } else {
+                let signature = sign_order(
+                    self.network_id,
+                    user_params.market,
+                    user_params.side,
+                    user_params.position_id,
+                    user_params.size,
+                    user_params.price,
+                    user_params.limit_fee,
+                    client_id.as_str(),
+                    user_params.expiration,
+                    self.stark_private_key.unwrap(),
+                )
+                .unwrap();
+            }
+        }
 
         let naive = NaiveDateTime::from_timestamp(user_params.expiration, 0);
         let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
