@@ -5,6 +5,7 @@ pub mod helper;
 pub mod modules;
 pub mod types;
 pub mod retry;
+pub mod types_v4;
 
 pub use dydx_client::ClientOptions;
 pub use dydx_client::DydxClient;
