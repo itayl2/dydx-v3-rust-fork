@@ -2,7 +2,7 @@ use std::any::Any;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub type OrdersResponse = Vec<crate::types::OrderResponseObject>;
+pub type OrdersResponse = Vec<OrderResponseObject>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiOrderParams<'a> {
