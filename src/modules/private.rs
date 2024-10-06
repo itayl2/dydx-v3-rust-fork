@@ -64,6 +64,7 @@ impl<'a> Private<'a> {
         let mut parameters = Vec::new();
         parameters.push(("address", self.eth_address));
         parameters.push(("subaccountNumber", self.subaccount_number));
+        
         if let Some(local_var) = market {
             parameters.push(("market", local_var));
         }
@@ -87,14 +88,14 @@ impl<'a> Private<'a> {
 
     pub async fn create_order(&self, user_params: ApiOrderParams<'_>) -> Result<InternalApiResponse> {
         let response = self
-            .request("orders", Method::POST, Vec::new(), user_params)
+            .internal_request("orders", Method::POST, Vec::new(), user_params)
             .await;
         response
     }
 
     pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: i64) -> Result<InternalApiResponse> {
         let response = self
-            .request("cancel_order", Method::DELETE, Vec::new(), json!({
+            .internal_request("cancel_order", Method::DELETE, Vec::new(), json!({
                 "market": market,
                 "client_id": client_id,
                 "good_til_block_time": good_til_block_time,
@@ -240,7 +241,7 @@ impl<'a> Private<'a> {
         data: V,
     ) -> Result<T> {
         let json = to_string(&data).unwrap();
-        let url = format!("{}/v4/{}", &self.internal_host, path);
+        let url = format!("{}/{}", &self.internal_host, path);
 
         let req_builder = match method {
             Method::GET => self.client.get(url),

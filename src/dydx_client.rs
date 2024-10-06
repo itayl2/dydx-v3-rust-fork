@@ -8,7 +8,6 @@ use crate::retry::{ErrorFn, ExponentialBuilderHelperGet, FallbackBackoffGetter, 
 
 #[derive(Debug)]
 pub struct ClientOptions<'a> {
-    pub network_id: Option<usize>,
     pub api_timeout: Option<u64>,
     pub eth_address: &'a str,
     pub subaccount_number: &'a str,
@@ -43,7 +42,6 @@ impl DydxClient<'_> {
                 api_timeout,
                 _options.private_error_handler,
                 _options.private_backoff_getter.unwrap_or(DydxClient::get_fallback_backoff_getter()),
-
             )),
         }
     }

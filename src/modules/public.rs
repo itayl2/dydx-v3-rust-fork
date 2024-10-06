@@ -48,13 +48,13 @@ impl<'a> Public<'a> {
         }
     }
 
-    pub async fn get_markets(&self, market: Option<&str>) -> Result<MarketsResponse> {
+    pub async fn get_markets(&self, ticker: Option<&str>) -> Result<MarketsResponse> {
         let mut parameter = Vec::new();
-        if let Some(local_var) = market {
-            parameter.push(("market", local_var));
+        if let Some(local_var) = ticker {
+            parameter.push(("ticker", local_var));
         }
 
-        self.get_retry_wrapper("markets", parameter.clone(), Some("get_markets")).await
+        self.get_retry_wrapper("perpetualMarkets", parameter.clone(), Some("get_markets")).await
     }
 
 
