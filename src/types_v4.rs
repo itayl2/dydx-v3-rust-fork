@@ -2,9 +2,39 @@ use std::any::Any;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub type OrdersResponse = Vec<crate::types::OrderResponseObject>;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OrdersResponse {
-    pub orders: Vec<OrderResponseObject>,
+pub struct ApiOrderParams<'a> {
+    pub market: &'a str,
+    pub side: &'a str,
+    pub order_type: &'a str,
+    pub size: &'a str,
+    pub price: &'a str,
+    pub time_in_force: &'a str,
+    pub client_id: &'a str,
+    pub reduce_only: bool,
+    pub good_til_block_time: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conditional_order_trigger_subticks: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub post_only: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub execution: Option<&'a str>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CancelOrderParams<'a> {
+    pub market: &'a str,
+    pub client_id: &'a str,
+    pub good_til_block_time: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InternalApiResponse {
+    pub hash: String,
+    pub code: i64,
+    pub raw_log: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

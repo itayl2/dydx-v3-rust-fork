@@ -1,17 +1,11 @@
 use std::fmt::Debug;
 use std::sync::Arc;
-use super::super::constants::*;
-use super::super::helper::*;
-use super::super::types::*;
+use super::super::types_v4::*;
 use super::super::{ResponseError, Result};
-use super::stark_sign::*;
-use chrono::prelude::*;
-use hmac::{Hmac, Mac};
 use http::{Method, StatusCode};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::*;
-use sha2::Sha256;
 use std::time::Duration;
 use backon::Retryable;
 use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
@@ -20,9 +14,9 @@ use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
 pub struct Private<'a> {
     client: reqwest::Client,
     host: &'a str,
-    network_id: usize,
-    api_key_credentials: ApiKeyCredentials<'a>,
-    stark_private_key: Option<&'a str>,
+    internal_host: &'a str,
+    eth_address: &'a str,
+    subaccount_number: &'a str,
     error_handler: Option<ErrorFn>,
     retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>
 }
@@ -30,10 +24,10 @@ pub struct Private<'a> {
 impl<'a> Private<'a> {
     pub fn new(
         host: &'a str,
-        network_id: usize,
+        internal_host: &'a str,
+        eth_address: &'a str,
+        subaccount_number: &'a str,
         api_timeout: u64,
-        api_key_credentials: ApiKeyCredentials<'a>,
-        stark_private_key: Option<&'a str>,
         error_handler: Option<ErrorFn>,
         retry_backoff_getter: Arc<dyn ExponentialBuilderHelperGet>,
     ) -> Arc<Private<'a>> {
@@ -43,104 +37,18 @@ impl<'a> Private<'a> {
                 .build()
                 .expect("Client::new()"),
             host,
-            network_id,
-            api_key_credentials,
-            stark_private_key,
+            eth_address,
+            subaccount_number,
+            internal_host,
             error_handler,
             retry_backoff_getter,
         })
     }
 
-    pub async fn get_registration(&self) -> Result<RegistrationResponse> {
-        let response = self
-            .retry_wrapper("registration", Vec::new(), json!({}), Some("get_registration"))
-            .await;
-        response
-    }
-
-    pub async fn get_user(&self) -> Result<UserResponse> {
-        let response = self
-            .retry_wrapper("users", Vec::new(), json!({}), Some("get_user"))
-            .await;
-        response
-    }
-
-    pub async fn get_api_keys(&self) -> Result<ApiKeysResponse> {
-        let response = self
-            .retry_wrapper("api-keys", Vec::new(), json!({}), Some("get_api_keys"))
-            .await;
-        response
-    }
-
-    pub async fn get_account(&self, ethereum_address: &str) -> Result<AccountResponse> {
-        let account_id = get_account_id(ethereum_address);
-        let path = format!("accounts/{}", account_id);
+    pub async fn get_account(&self) -> Result<SubaccountResponseObject> {
+        let path = format!("addresses/{}/subaccountNumber/{}", self.eth_address, self.subaccount_number);
         let response = self
             .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_account"))
-            .await;
-        response
-    }
-
-    pub async fn get_accounts(&self) -> Result<AccountsResponse> {
-        let response = self
-            .retry_wrapper("accounts", Vec::new(), json!({}), Some("get_accounts"))
-            .await;
-        response
-    }
-
-    pub async fn update_user(&self, data: UserParams<'_>) -> Result<UserResponse> {
-        let response = self.request("users", Method::PUT, Vec::new(), data).await;
-        response
-    }
-
-    pub async fn create_account(
-        &self,
-        stark_key: &str,
-        stark_key_y_coordinate: &str,
-    ) -> Result<AccountResponse> {
-        let data = CreateAccountParams {
-            stark_key,
-            stark_key_y_coordinate,
-        };
-
-        let response = self
-            .request("accounts", Method::POST, Vec::new(), data)
-            .await;
-        response
-    }
-
-    pub async fn get_account_leaderboard_pnl(
-        &self,
-        period: &str,
-        starting_before_or_at: Option<&str>,
-    ) -> Result<AccountPnlsResponse> {
-        let path = format!("accounts/leaderboard-pnl/{}", period);
-
-        let mut parameters = Vec::new();
-        if let Some(local_var) = starting_before_or_at {
-            parameters.push(("startingBeforeOrAt", local_var));
-        }
-
-        let response = self
-            .retry_wrapper(path.as_str(), parameters, json!({}), Some("get_account_leaderboard_pnl"))
-            .await;
-        response
-    }
-
-    pub async fn get_historical_leaderboard_pnls(
-        &self,
-        period: &str,
-        limit: Option<&str>,
-    ) -> Result<HistoricalLeaderboardPnlsResponse> {
-        let path = format!("accounts/historical-leaderboard-pnls/{}", period);
-
-        let mut parameters = Vec::new();
-        if let Some(local_var) = limit {
-            parameters.push(("limit", local_var));
-        }
-
-        let response = self
-            .retry_wrapper(path.as_str(), parameters, json!({}), Some("get_historical_leaderboard_pnls"))
             .await;
         response
     }
@@ -150,9 +58,12 @@ impl<'a> Private<'a> {
         market: Option<&str>,
         status: Option<&str>,
         limit: Option<&str>,
+        created_before_or_at_height: Option<&str>,
         created_before_or_at: Option<&str>,
-    ) -> Result<PositionsResponse> {
+    ) -> Result<PerpetualPositionResponse> {
         let mut parameters = Vec::new();
+        parameters.push(("address", self.eth_address));
+        parameters.push(("subaccountNumber", self.subaccount_number));
         if let Some(local_var) = market {
             parameters.push(("market", local_var));
         }
@@ -165,268 +76,50 @@ impl<'a> Private<'a> {
         if let Some(local_var) = created_before_or_at {
             parameters.push(("createdBeforeOrAt", local_var));
         }
-        let response = self
-            .retry_wrapper("positions", parameters, json!({}), Some("get_positions"))
-            .await;
-        response
-    }
-
-    pub fn test_sign_order(&self) -> Result<()> {
-        let market = "BTC-USD";
-        let side = "BUY";
-        let position_id = "123";
-        let size = "1";
-        let price = "10000";
-        let limit_fee = "0.1";
-        let client_id = "123";
-        let expiration = 1610000000;
-
-        let signature = sign_order(
-            self.network_id,
-            market,
-            side,
-            position_id,
-            size,
-            price,
-            limit_fee,
-            client_id,
-            expiration,
-            self.stark_private_key.unwrap(),
-        )?;
-
-        println!("Signature: {:?}", signature);
-        Ok(())
-    }
-
-    pub async fn create_order(&self, user_params: ApiOrderParams<'_>) -> Result<OrderResponse> {
-        let client_id = if user_params.client_id.is_some() {
-            user_params.client_id.unwrap().to_owned()
-        } else {
-            generate_random_client_id()
-        };
-
-        cfg_if::cfg_if! {
-        if #[cfg(feature = "dummy_signature")] {
-            let signature = "blabla".to_string();
-        } else {
-                let signature = sign_order(
-                    self.network_id,
-                    user_params.market,
-                    user_params.side,
-                    user_params.position_id,
-                    user_params.size,
-                    user_params.price,
-                    user_params.limit_fee,
-                    client_id.as_str(),
-                    user_params.expiration,
-                    self.stark_private_key.unwrap(),
-                )
-                .unwrap();
-            }
-        }
-
-        let naive = NaiveDateTime::from_timestamp(user_params.expiration, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-        let expiration_second = datetime.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
-
-        let parameters = ApiOrder {
-            market: user_params.market,
-            side: user_params.side,
-            type_field: user_params.type_field,
-            size: user_params.size,
-            price: user_params.price,
-            time_in_force: user_params.time_in_force,
-            post_only: user_params.post_only,
-            limit_fee: user_params.limit_fee,
-            cancel_id: user_params.cancel_id,
-            trigger_price: user_params.trigger_price,
-            trailing_percent: user_params.trailing_percent,
-            expiration: expiration_second.as_str(),
-            client_id: client_id.as_str(),
-            signature: signature.as_str(),
-        };
-
-        let response = self
-            .request("orders", Method::POST, Vec::new(), parameters)
-            .await;
-        response
-    }
-
-    pub async fn create_transfer(
-        &self,
-        user_params: TransferParams<'_>,
-    ) -> Result<TransferResponse> {
-        let client_id = generate_random_client_id();
-
-        let signature = sign_transfer(
-            self.network_id,
-            user_params.position_id,
-            user_params.receiver_position_id,
-            user_params.receiver_public_key,
-            user_params.amount,
-            &client_id,
-            user_params.expiration,
-            self.stark_private_key.unwrap(),
-        )
-        .unwrap();
-
-        let naive = NaiveDateTime::from_timestamp(user_params.expiration, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-        let expiration_second = datetime.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
-
-        let parameters = ApiTransfer {
-            amount: user_params.amount,
-            receiver_account_id: user_params.receiver_account_id,
-            expiration: expiration_second.as_str(),
-            client_id: client_id.as_str(),
-            signature: signature.as_str(),
-        };
-
-        let response = self
-            .request("transfers", Method::POST, Vec::new(), parameters)
-            .await;
-        response
-    }
-
-    pub async fn create_withdraw(
-        &self,
-        user_params: ApiWithdrawParams<'_>,
-    ) -> Result<WithdrawalResponse> {
-        let client_id = generate_random_client_id();
-
-        let signature = sign_withdraw(
-            self.network_id,
-            user_params.position_id,
-            user_params.amount,
-            &client_id,
-            user_params.expiration,
-            self.stark_private_key.unwrap(),
-        )
-        .unwrap();
-
-        let naive = NaiveDateTime::from_timestamp(user_params.expiration, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-        let expiration_second = datetime.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
-
-        let parameters = ApiWithdraw {
-            amount: user_params.amount,
-            asset: user_params.asset,
-            expiration: expiration_second.as_str(),
-            client_id: client_id.as_str(),
-            signature: signature.as_str(),
-        };
-
-        let response = self
-            .request("withdrawals", Method::POST, Vec::new(), parameters)
-            .await;
-        response
-    }
-
-    pub async fn create_fast_withdraw(
-        &self,
-        user_params: ApiFastWithdrawalParams<'_>,
-    ) -> Result<WithdrawalResponse> {
-        let client_id = generate_random_client_id();
-
-        let fact_address = if self.network_id == 1 {
-            FACT_REGISTRY_CONTRACT_MAINNET
-        } else {
-            FACT_REGISTRY_CONTRACT_ROPSTEN
-        };
-        let token_address = if self.network_id == 1 {
-            ASSET_USDC_CONTRACT_MAINNET
-        } else {
-            FACT_REGISTRY_CONTRACT_ROPSTEN
-        };
-
-        let signature = sign_fast_withdraw(
-            self.network_id,
-            user_params.position_id,
-            user_params.lp_position_id,
-            user_params.lp_stark_key,
-            fact_address,
-            user_params.to_address,
-            COLLATERAL_TOKEN_DECIMALS,
-            user_params.credit_amount,
-            token_address,
-            &client_id,
-            user_params.expiration,
-            self.stark_private_key.unwrap(),
-        )
-        .unwrap();
-
-        let naive = NaiveDateTime::from_timestamp(user_params.expiration, 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-        let expiration_second = datetime.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
-
-        let parameters = ApiFastWithdrawal {
-            credit_asset: user_params.credit_asset,
-            credit_amount: user_params.credit_amount,
-            debit_amount: user_params.debit_amount,
-            to_address: user_params.to_address,
-            lp_position_id: user_params.lp_position_id,
-            expiration: expiration_second.as_str(),
-            client_id: &client_id,
-            signature: signature.as_str(),
-        };
-
-        let response = self
-            .request("fast-withdrawals", Method::POST, Vec::new(), parameters)
-            .await;
-        response
-    }
-
-    pub async fn get_transfers(
-        &self,
-        transfer_type: &str,
-        limit: Option<&str>,
-        created_before_or_at: Option<&str>,
-    ) -> Result<TransfersResponse> {
-        let mut parameters = vec![("transferType", transfer_type)];
-        if let Some(local_var) = limit {
-            parameters.push(("limit", local_var));
-        }
-        if let Some(local_var) = created_before_or_at {
-            parameters.push(("createdBeforeOrAt", local_var));
+        if let Some(local_var) = created_before_or_at_height {
+            parameters.push(("createdBeforeOrAtHeight", local_var));
         }
         let response = self
-            .retry_wrapper("transfers", Vec::new(), parameters, Some("get_transfers"))
+            .retry_wrapper("perpetualPositions", parameters, json!({}), Some("get_positions"))
             .await;
         response
     }
 
-    pub async fn cancel_order(&self, order_id: &str) -> Result<CancelOrderResponse> {
-        let path = format!("orders/{}", order_id);
+    pub async fn create_order(&self, user_params: ApiOrderParams<'_>) -> Result<InternalApiResponse> {
         let response = self
-            .request(path.as_str(), Method::DELETE, Vec::new(), json!({}))
+            .request("orders", Method::POST, Vec::new(), user_params)
             .await;
         response
     }
 
-    pub async fn cancel_all_orders(&self, market: Option<&str>) -> Result<CancelOrdersResponse> {
-        let mut parameters = Vec::new();
-        if let Some(local_var) = market {
-            parameters.push(("market", local_var));
-        }
+    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: i64) -> Result<InternalApiResponse> {
         let response = self
-            .request("orders", Method::DELETE, parameters, json!({}))
+            .request("cancel_order", Method::DELETE, Vec::new(), json!({
+                "market": market,
+                "client_id": client_id,
+                "good_til_block_time": good_til_block_time,
+            }))
             .await;
         response
     }
 
     pub async fn get_orders(
         &self,
-        market: Option<&str>,
+        ticker: Option<&str>,
         status: Option<&str>,
         side: Option<&str>,
         type_field: Option<&str>,
         limit: Option<&str>,
-        created_before_or_at: Option<&str>,
+        good_til_block_before_or_at: Option<&str>,
+        good_til_block_time_before_or_at: Option<&str>,
         return_latest_orders: Option<&str>,
     ) -> Result<OrdersResponse> {
         let mut parameters = Vec::new();
-        if let Some(local_var) = market {
-            parameters.push(("market", local_var));
+        parameters.push(("address", self.eth_address));
+        parameters.push(("subaccountNumber", self.subaccount_number));
+
+        if let Some(local_var) = ticker {
+            parameters.push(("ticker", local_var));
         }
         if let Some(local_var) = status {
             parameters.push(("status", local_var));
@@ -440,33 +133,17 @@ impl<'a> Private<'a> {
         if let Some(local_var) = limit {
             parameters.push(("limit", local_var));
         }
-        if let Some(local_var) = created_before_or_at {
-            parameters.push(("created_before_or_at", local_var));
+        if let Some(local_var) = good_til_block_before_or_at {
+            parameters.push(("goodTilBlockBeforeOrAt", local_var));
+        }
+        if let Some(local_var) = good_til_block_time_before_or_at {
+            parameters.push(("goodTilBlockTimeBeforeOrAt", local_var));
         }
         if let Some(local_var) = return_latest_orders {
-            parameters.push(("return_latest_orders", local_var));
+            parameters.push(("returnLatestOrders", local_var));
         }
         let response = self
             .retry_wrapper("orders", Vec::new(), json!({}), Some("get_orders"))
-            .await;
-        response
-    }
-
-    pub async fn get_active_orders(
-        &self,
-        market: &str,
-        side: Option<&str>,
-        id: Option<&str>,
-    ) -> Result<ActiveOrdersResponse> {
-        let mut parameters = vec![("market", market)];
-        if let Some(local_var) = side {
-            parameters.push(("side", local_var));
-        }
-        if let Some(local_var) = id {
-            parameters.push(("id", local_var));
-        }
-        let response = self
-            .retry_wrapper("active-orders", parameters, json!({}), Some("get_active_orders"))
             .await;
         response
     }
@@ -479,132 +156,36 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn get_order_by_client_id(&self, id: &str) -> Result<OrderResponse> {
-        let path = format!("orders/client/{}", id);
-        let response = self
-            .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_order_by_client_id"))
-            .await;
-        response
-    }
-
     pub async fn get_fills(
         &self,
         market: Option<&str>,
-        order_id: Option<&str>,
+        market_type: Option<&str>,
         limit: Option<&str>,
+        created_before_or_at_height: Option<&str>,
         created_before_or_at: Option<&str>,
-    ) -> Result<FillsResponse> {
+    ) -> Result<FillResponse> {
         let mut parameters = Vec::new();
+        parameters.push(("address", self.eth_address));
+        parameters.push(("subaccountNumber", self.subaccount_number));
+
         if let Some(local_var) = market {
             parameters.push(("market", local_var));
         }
-        if let Some(local_var) = order_id {
-            parameters.push(("orderId", local_var));
+        if let Some(local_var) = market_type {
+            parameters.push(("marketType", local_var));
         }
         if let Some(local_var) = limit {
             parameters.push(("limit", local_var));
+        }
+        if let Some(local_var) = created_before_or_at_height {
+            parameters.push(("createdBeforeOrAtHeight", local_var));
         }
         if let Some(local_var) = created_before_or_at {
             parameters.push(("createdBeforeOrAt", local_var));
         }
+
         let response = self
             .retry_wrapper("fills", parameters, json!({}), Some("get_fills"))
-            .await;
-        response
-    }
-
-    pub async fn get_funding_payments(
-        &self,
-        market: Option<&str>,
-        limit: Option<&str>,
-        effective_before_or_at: Option<&str>,
-    ) -> Result<FundingResponse> {
-        let mut parameters = Vec::new();
-        if let Some(local_var) = market {
-            parameters.push(("market", local_var));
-        }
-        if let Some(local_var) = limit {
-            parameters.push(("limit", local_var));
-        }
-        if let Some(local_var) = effective_before_or_at {
-            parameters.push(("effectiveBeforeOrAt", local_var));
-        }
-        let response = self
-            .retry_wrapper("funding", parameters, json!({}), Some("get_funding_payments"))
-            .await;
-        response
-    }
-
-    pub async fn get_historical_pnl(
-        &self,
-        effective_before_or_at: Option<&str>,
-        effective_at_or_after: Option<&str>,
-    ) -> Result<HistoricalPnlResponse> {
-        let mut parameters = Vec::new();
-        if let Some(local_var) = effective_before_or_at {
-            parameters.push(("effectiveBeforeOrAt", local_var));
-        }
-        if let Some(local_var) = effective_at_or_after {
-            parameters.push(("effectiveAtOrAfter", local_var));
-        }
-        let response = self
-            .retry_wrapper("historical-pnl", parameters, json!({}), Some("get_historical_pnl"))
-            .await;
-        response
-    }
-
-    pub async fn get_trading_rewards(&self, epoch: Option<&str>) -> Result<TradingRewardsResponse> {
-        let mut parameters = Vec::new();
-        if let Some(local_var) = epoch {
-            parameters.push(("epoch", local_var));
-        }
-        let response = self
-            .retry_wrapper("rewards/weight", parameters, json!({}), Some("get_trading_rewards"))
-            .await;
-        response
-    }
-
-    pub async fn get_liquidity_provider_rewards(
-        &self,
-        epoch: Option<&str>,
-    ) -> Result<LiquidityProviderRewardsResponse> {
-        let mut parameters = Vec::new();
-        if let Some(local_var) = epoch {
-            parameters.push(("epoch", local_var));
-        }
-        let response = self
-            .retry_wrapper("rewards/liquidity", parameters, json!({}), Some("get_liquidity_provider_rewards"))
-            .await;
-        response
-    }
-
-    pub async fn get_retroactive_mining_rewards(&self) -> Result<RetroactiveMiningRewardsResponse> {
-        let response = self
-            .retry_wrapper(
-                "rewards/retroactive-mining",
-                Vec::new(),
-                json!({}),
-                Some("get_retroactive_mining_rewards"),
-            )
-            .await;
-        response
-    }
-
-    pub async fn send_verification_email(&self) -> Result<StatusCode> {
-        let response = self.put("emails/send-verification-email").await;
-        response
-    }
-
-    pub async fn request_testnet_tokens(&self) -> Result<TransferResponse> {
-        let response = self
-            .request("testnet/tokens", Method::POST, Vec::new(), json!({}))
-            .await;
-        response
-    }
-
-    pub async fn get_profile(&self) -> Result<ProfilePrivateResponse> {
-        let response = self
-            .retry_wrapper("profile/private", Vec::new(), json!({}), Some("get_profile"))
             .await;
         response
     }
@@ -651,32 +232,15 @@ impl<'a> Private<'a> {
         result
     }
 
-    async fn request<T: for<'de> Deserialize<'de>, V: Serialize>(
+    async fn internal_request<T: for<'de> Deserialize<'de>, V: Serialize>(
         &self,
         path: &str,
         method: Method,
         parameters: Vec<(&str, &str)>,
         data: V,
     ) -> Result<T> {
-        let request_path = if parameters.len() == 0 {
-            format!("/v3/{}", &path)
-        } else {
-            let request_path = format!("/v3/{}", &path);
-            let dummy_url = reqwest::Url::parse_with_params("https://example.net", &parameters);
-            format!("{}?{}", request_path, dummy_url.unwrap().query().unwrap())
-        };
-
-        let iso_timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
         let json = to_string(&data).unwrap();
-
-        let signature = self.sign(
-            request_path.as_str(),
-            method.as_str(),
-            &iso_timestamp,
-            Some(json.as_str()),
-        );
-
-        let url = format!("{}/v3/{}", &self.host, path);
+        let url = format!("{}/v4/{}", &self.internal_host, path);
 
         let req_builder = match method {
             Method::GET => self.client.get(url),
@@ -687,10 +251,6 @@ impl<'a> Private<'a> {
         };
 
         let req_builder = req_builder
-            .header("DYDX-SIGNATURE", signature.as_str())
-            .header("DYDX-TIMESTAMP", iso_timestamp.as_str())
-            .header("DYDX-API-KEY", self.api_key_credentials.key)
-            .header("DYDX-PASSPHRASE", self.api_key_credentials.passphrase)
             .query(&parameters);
 
         let req_builder = if json != "{}" {
@@ -724,27 +284,55 @@ impl<'a> Private<'a> {
         };
     }
 
-    fn sign(
+    async fn request<T: for<'de> Deserialize<'de>, V: Serialize>(
         &self,
-        request_path: &str,
-        method: &str,
-        iso_timestamp: &String,
-        data: Option<&str>,
-    ) -> String {
-        let mut message = String::from(iso_timestamp) + method + request_path;
+        path: &str,
+        method: Method,
+        parameters: Vec<(&str, &str)>,
+        data: V,
+    ) -> Result<T> {
+        let json = to_string(&data).unwrap();
+        let url = format!("{}/v4/{}", &self.host, path);
 
-        if let Some(local_var) = data {
-            if local_var != "{}" {
-                message.push_str(local_var);
+        let req_builder = match method {
+            Method::GET => self.client.get(url),
+            Method::POST => self.client.post(url),
+            Method::PUT => self.client.put(url),
+            Method::DELETE => self.client.delete(url),
+            _ => self.client.get(url),
+        };
+
+        let req_builder = req_builder
+            .query(&parameters);
+
+        let req_builder = if json != "{}" {
+            req_builder.json(&data)
+        } else {
+            req_builder
+        };
+        let response = req_builder.send().await;
+
+        match response {
+            Ok(response) => match response.status() {
+                StatusCode::OK | StatusCode::CREATED => {
+                    // return Ok(response.json::<T>().await.unwrap())
+                    return match response.json::<T>().await {
+                        Ok(r) => Ok(r),
+                        Err(e) => Err(Box::new(e)),
+                    };
+                }
+                _ => {
+                    let error = ResponseError {
+                        code: response.status().to_string(),
+                        // message: response.text().await.unwrap(),
+                        message: response.text().await.unwrap_or_else(|e| e.to_string()),
+                    };
+                    return Err(Box::new(error));
+                }
+            },
+            Err(err) => {
+                return Err(Box::new(err));
             }
-        }
-
-        let secret = self.api_key_credentials.secret;
-        let secret = base64::decode_config(secret, base64::URL_SAFE).unwrap();
-
-        let mut mac = Hmac::<Sha256>::new_from_slice(&*secret).unwrap();
-        mac.update(message.as_bytes());
-        let code = mac.finalize().into_bytes();
-        base64::encode(&code)
+        };
     }
 }

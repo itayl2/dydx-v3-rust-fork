@@ -1,10 +1,7 @@
 use std::fmt::Debug;
 use std::sync::Arc;
-use self::types::ApiKeyCredentials;
 
 pub use super::types;
-use crate::modules::eth_private::EthPrivate;
-use crate::modules::onboarding::Onboarding;
 use crate::modules::private::Private;
 use crate::modules::public::Public;
 use crate::retry::{ErrorFn, ExponentialBuilderHelperGet, FallbackBackoffGetter, NoBackoffGetter};
@@ -13,9 +10,8 @@ use crate::retry::{ErrorFn, ExponentialBuilderHelperGet, FallbackBackoffGetter, 
 pub struct ClientOptions<'a> {
     pub network_id: Option<usize>,
     pub api_timeout: Option<u64>,
-    pub api_key_credentials: Option<ApiKeyCredentials<'a>>,
-    pub stark_private_key: Option<&'a str>,
-    pub eth_private_key: Option<&'a str>,
+    pub eth_address: &'a str,
+    pub subaccount_number: &'a str,
     pub public_error_handler: Option<ErrorFn>, // Correct use of `dyn`
     pub private_error_handler: Option<ErrorFn>, // Correct use of `dyn`
     pub public_backoff_getter: Option<Arc<dyn ExponentialBuilderHelperGet>>,
@@ -29,41 +25,26 @@ pub struct DydxClient<'a> {
     pub api_timeout: Option<u64>,
     pub public: Public<'a>,
     pub private: Option<Arc<Private<'a>>>,
-    pub eth_private: Option<EthPrivate<'a>>,
-    pub onboarding: Option<Onboarding<'a>>,
 }
 
 impl DydxClient<'_> {
-    pub fn new<'a>(host: &'a str, mut _options: ClientOptions<'a>) -> DydxClient<'a> {
+    pub fn new<'a>(host: &'a str, internal_host: &'a str, mut _options: ClientOptions<'a>) -> DydxClient<'a> {
         let mut _options = _options;
-        let network_id = _options.network_id.unwrap_or(1);
         let api_timeout = _options.api_timeout.unwrap_or(10);
         DydxClient {
             api_timeout: None,
 
             public: Public::new(host, api_timeout, _options.public_error_handler, _options.public_backoff_getter.unwrap_or(DydxClient::get_fallback_backoff_getter())),
-            private: match _options.api_key_credentials {
-                Some(v) => Some(Private::new(
-                    host,
-                    network_id,
-                    api_timeout,
-                    v,
-                    _options.stark_private_key,
-                    _options.private_error_handler,
-                    _options.private_backoff_getter.unwrap_or(DydxClient::get_fallback_backoff_getter()),
-                )),
-                None => None,
-            },
-            eth_private: match _options.eth_private_key {
-                Some(v) => Some(EthPrivate::new(
-                    host, network_id, api_timeout,v,
-                )),
-                None => None,
-            },
-            onboarding: match _options.eth_private_key {
-                Some(r) => Some(Onboarding::new(host, network_id, api_timeout, r)),
-                None => None,
-            },
+            private: Some(Private::new(
+                host,
+                internal_host,
+                _options.eth_address,
+                _options.subaccount_number,
+                api_timeout,
+                _options.private_error_handler,
+                _options.private_backoff_getter.unwrap_or(DydxClient::get_fallback_backoff_getter()),
+
+            )),
         }
     }
 
