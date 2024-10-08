@@ -1,32 +1,33 @@
 use std::any::Any;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use strum_macros::{Display, EnumString};
 
 pub type OrdersResponse = Vec<OrderResponseObject>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiOrderParams<'a> {
-    pub market: &'a str,
-    pub side: &'a str,
-    pub order_type: &'a str,
-    pub size: &'a str,
-    pub price: &'a str,
-    pub time_in_force: &'a str,
-    pub client_id: &'a str,
+pub struct ApiOrderParams {
+    pub market: String,
+    pub side: OrderSide,
+    pub order_type: OrderType,
+    pub size: String,
+    pub price: String,
+    pub time_in_force: APITimeInForce,
+    pub client_id: String,
     pub reduce_only: bool,
     pub good_til_block_time: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub conditional_order_trigger_subticks: Option<&'a str>,
+    pub conditional_order_trigger_subticks: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub post_only: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub execution: Option<&'a str>,
+    pub execution: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CancelOrderParams<'a> {
-    pub market: &'a str,
-    pub client_id: &'a str,
+pub struct CancelOrderParams {
+    pub market: String,
+    pub client_id: String,
     pub good_til_block_time: i64,
 }
 
@@ -71,14 +72,14 @@ pub struct OrderResponseObject {
     pub subaccount_number: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
     Limit,
@@ -90,14 +91,14 @@ pub enum OrderType {
     TakeProfitMarket,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum APITimeInForce {
     GTT,
     FOK,
     IOC,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum APIOrderStatus {
     Open,
@@ -106,6 +107,42 @@ pub enum APIOrderStatus {
     BestEffortCanceled,
     Untriggered,
     BestEffortOpened,
+}
+
+impl APIOrderStatus {
+    pub fn get_open_statuses() -> Vec<Self> {
+        vec![Self::BestEffortOpened, Self::Open, Self::Untriggered]
+    }
+
+    pub fn get_closed_statuses() -> Vec<Self> {
+        vec![Self::Filled, Self::Canceled, Self::BestEffortCanceled]
+    }
+
+    pub fn get_step_number(&self) -> usize {
+        match self {
+            Self::Untriggered => 0,
+            Self::BestEffortOpened => 1,
+            Self::Open => 1,
+            Self::Filled => 2,
+            Self::Canceled => 2,
+            Self::BestEffortCanceled => 2,
+        }
+    }
+
+    pub fn is_filled(&self) -> bool {
+        match self {
+            Self::Filled => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_canceled(&self) -> bool {
+        match self {
+            Self::Canceled => true,
+            Self::BestEffortCanceled => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,6 +164,44 @@ pub struct SubaccountResponseObject {
     pub margin_enabled: bool,
     pub updated_at_height: String,
     pub latest_processed_block_height: String,
+}
+
+impl Default for SubaccountResponseObject {
+    fn default() -> Self {
+        Self {
+            address: String::default(),
+            subaccount_number: f64::default(),
+            equity: String::default(),
+            free_collateral: String::default(),
+            open_perpetual_positions: PerpetualPositionsMap::default(),
+            asset_positions: AssetPositionsMap::default(),
+            margin_enabled: false,
+            updated_at_height: String::default(),
+            latest_processed_block_height: String::default(),
+        }
+    }
+}
+
+impl SubaccountResponseObject {
+    pub fn get_quote_balance(&self) -> String {
+        match self.asset_positions.get("USDC") {
+            Some(position) => position.size.clone(),
+            None => "0.0".to_string(),
+        }
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubaccountWebSocketObject {
+    pub address: String,
+    pub subaccount_number: f64,
+    pub equity: String,
+    pub free_collateral: String,
+    pub open_perpetual_positions: PerpetualPositionsMap,
+    pub asset_positions: AssetPositionsMap,
+    pub margin_enabled: bool,
 }
 
 pub type PerpetualPositionsMap = HashMap<String, PerpetualPositionResponseObject>;
@@ -153,14 +228,14 @@ pub struct PerpetualPositionResponseObject {
     pub subaccount_number: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum PerpetualPositionStatus {
     OPEN,
     CLOSED,
     LIQUIDATED,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum PositionSide {
     LONG,
     SHORT,
@@ -193,7 +268,7 @@ export enum RequestMethod {
   PUT = 'PUT',
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
 pub enum RequestMethod {
     DELETE,
     GET,
@@ -576,7 +651,7 @@ export enum MarketType {
   SPOT = 'SPOT',
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
 pub enum MarketType {
     #[serde(rename = "PERPETUAL")]
     Perpetual,
@@ -646,6 +721,8 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest_upper_cap: Option<String>,
     pub base_open_interest: String,
 }
+
+pub type PriceLevel = Vec<String>;
 
 /**
 export interface OrderbookResponseObject {
@@ -726,7 +803,7 @@ export enum SparklineTimePeriod {
   SEVEN_DAYS = 'SEVEN_DAYS',
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
 pub enum SparklineTimePeriod {
     #[serde(rename = "ONE_DAY")]
     OneDay,
@@ -1276,7 +1353,7 @@ export enum BlockedCode {
   COMPLIANCE_BLOCKED = 'COMPLIANCE_BLOCKED',
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
 pub enum BlockedCode {
     #[serde(rename = "GEOBLOCKED")]
     Geoblocked,
@@ -1694,7 +1771,7 @@ export enum Liquidity {
   MAKER = 'MAKER',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum Liquidity {
     TAKER,
     MAKER,
@@ -1709,7 +1786,7 @@ export enum FillType {
   OFFSETTING = 'OFFSETTING',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum FillType {
     LIMIT,
     LIQUIDATED,
@@ -1726,7 +1803,7 @@ export enum TransferType {
   WITHDRAWAL = 'WITHDRAWAL',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum TransferType {
     TRANSFER_IN,
     TRANSFER_OUT,
@@ -1741,7 +1818,7 @@ export enum TradeType {
   DELEVERAGED = 'DELEVERAGED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum TradeType {
     LIMIT,
     LIQUIDATED,
@@ -1776,7 +1853,7 @@ export enum PerpetualMarketStatus {
   FINAL_SETTLEMENT = 'FINAL_SETTLEMENT',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum PerpetualMarketStatus {
     ACTIVE,
     PAUSED,
@@ -1792,7 +1869,7 @@ export enum PerpetualMarketType {
   ISOLATED = 'ISOLATED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum PerpetualMarketType {
     CROSS,
     ISOLATED,
@@ -1866,7 +1943,7 @@ export enum CandleResolution {
   ONE_MIN = '1MIN',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum CandleResolution {
     #[serde(rename = "1DAY")]
     OneDay,
@@ -1893,7 +1970,7 @@ export enum OrderStatus {
   UNTRIGGERED = 'UNTRIGGERED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum OrderStatus {
     OPEN,
     FILLED,
@@ -1911,7 +1988,7 @@ export enum ComplianceStatus {
   BLOCKED = 'BLOCKED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum ComplianceStatus {
     COMPLIANT,
     FIRST_STRIKE_CLOSE_ONLY,
@@ -1930,7 +2007,7 @@ export enum ComplianceReason {
   COMPLIANCE_PROVIDER = 'COMPLIANCE_PROVIDER',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum ComplianceReason {
     MANUAL,
     US_GEO,
@@ -1947,7 +2024,7 @@ export enum TradingRewardAggregationPeriod {
   MONTHLY = 'MONTHLY',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum TradingRewardAggregationPeriod {
     DAILY,
     WEEKLY,
@@ -1960,7 +2037,7 @@ export enum PnlTickInterval {
   day = 'day',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum PnlTickInterval {
     #[serde(rename = "hour")]
     Hour,

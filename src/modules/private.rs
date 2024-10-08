@@ -86,7 +86,7 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn create_order(&self, user_params: ApiOrderParams<'_>) -> Result<InternalApiResponse> {
+    pub async fn create_order(&self, user_params: ApiOrderParams) -> Result<InternalApiResponse> {
         let response = self
             .internal_request("orders", Method::POST, Vec::new(), user_params)
             .await;
