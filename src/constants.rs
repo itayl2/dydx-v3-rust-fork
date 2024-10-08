@@ -17,3 +17,5 @@ pub const TEST_STARK_PRIVATE_KEY: &str =
 pub const TEST_STARK_Y_COORDINATE: &str =
     "041128f350e96f6562cd5ba16ce15d2d95a6502c4fa5fa5e8ad6e90c8db9420b";
 pub const POSITION_ID: &str = "228";
+
+pub const MAX_CLIENT_ID: u32 = u32::MAX;

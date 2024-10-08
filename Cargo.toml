@@ -39,6 +39,7 @@ serde_derive = "1.0.198"
 cfg-if = "1.0.0"
 strum_macros = "0.26.4"
 strum = "0.26.3"
+anyhow = "1.0.89"
 
 [dev-dependencies]
 speculate = "0.1.2"

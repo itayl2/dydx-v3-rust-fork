@@ -143,6 +143,10 @@ impl APIOrderStatus {
             _ => false,
         }
     }
+    
+    pub fn is_closed(&self) -> bool {
+        self.is_canceled() || self.is_filled()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -235,7 +239,7 @@ pub enum PerpetualPositionStatus {
     LIQUIDATED,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
 pub enum PositionSide {
     LONG,
     SHORT,
@@ -1201,7 +1205,7 @@ pub struct ListOrderRequest {
     pub side: Option<OrderSide>,
     #[serde(rename = "type")]
     pub order_type: Option<OrderType>,
-    pub status: Option<Vec<OrderStatus>>,
+    pub status: Option<Vec<APIOrderStatus>>,
     pub good_til_block_before_or_at: Option<f64>,
     pub good_til_block_time_before_or_at: Option<String>,
     pub return_latest_orders: Option<bool>,
@@ -1228,7 +1232,7 @@ pub struct ParentSubaccountListOrderRequest {
     pub side: Option<OrderSide>,
     #[serde(rename = "type")]
     pub order_type: Option<OrderType>,
-    pub status: Option<Vec<OrderStatus>>,
+    pub status: Option<Vec<APIOrderStatus>>,
     pub good_til_block_before_or_at: Option<f64>,
     pub good_til_block_time_before_or_at: Option<String>,
     pub return_latest_orders: Option<bool>,
@@ -1919,7 +1923,7 @@ pub struct OrderFromDatabase {
     pub price: String,
     #[serde(rename = "type")]
     pub type_field: OrderType,
-    pub status: OrderStatus,
+    pub status: APIOrderStatus,
     pub time_in_force: APITimeInForce,
     pub reduce_only: bool,
     pub order_flags: String,
@@ -1961,23 +1965,6 @@ pub enum CandleResolution {
     OneMin,
 }
 
-/**
-export enum OrderStatus {
-  OPEN = 'OPEN',
-  FILLED = 'FILLED',
-  CANCELED = 'CANCELED',
-  BEST_EFFORT_CANCELED = 'BEST_EFFORT_CANCELED',
-  UNTRIGGERED = 'UNTRIGGERED',
-}
- **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
-pub enum OrderStatus {
-    OPEN,
-    FILLED,
-    CANCELED,
-    BEST_EFFORT_CANCELED,
-    UNTRIGGERED,
-}
 
 /**
 export enum ComplianceStatus {

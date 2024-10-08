@@ -8,6 +8,8 @@ use serde::Serialize;
 use serde_json::*;
 use std::time::Duration;
 use backon::Retryable;
+use crate::error_with_send::DydxErrorWithSend;
+use crate::ResultWithSend;
 use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
 
 #[derive(Debug, Clone)]
@@ -86,14 +88,14 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn create_order(&self, user_params: ApiOrderParams) -> Result<InternalApiResponse> {
+    pub async fn create_order(&self, user_params: ApiOrderParams) -> ResultWithSend<InternalApiResponse> {
         let response = self
             .internal_request("orders", Method::POST, Vec::new(), user_params)
             .await;
         response
     }
 
-    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: i64) -> Result<InternalApiResponse> {
+    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: i64) -> ResultWithSend<InternalApiResponse> {
         let response = self
             .internal_request("cancel_order", Method::DELETE, Vec::new(), json!({
                 "market": market,
@@ -149,7 +151,7 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn get_order_by_id(&self, id: &str) -> Result<OrderResponse> {
+    pub async fn get_order_by_id(&self, id: &str) -> Result<OrderResponseObject> {
         let path = format!("orders/{}", id);
         let response = self
             .retry_wrapper(path.as_str(), Vec::new(), json!({}), Some("get_order_by_id"))
@@ -239,7 +241,7 @@ impl<'a> Private<'a> {
         method: Method,
         parameters: Vec<(&str, &str)>,
         data: V,
-    ) -> Result<T> {
+    ) -> ResultWithSend<T> {
         let json = to_string(&data).unwrap();
         let url = format!("{}/{}", &self.internal_host, path);
 
@@ -267,7 +269,7 @@ impl<'a> Private<'a> {
                     // return Ok(response.json::<T>().await.unwrap())
                     return match response.json::<T>().await {
                         Ok(r) => Ok(r),
-                        Err(e) => Err(Box::new(e)),
+                        Err(e) => Err(DydxErrorWithSend::new(&format!("{e:?}"))),
                     };
                 }
                 _ => {
@@ -276,11 +278,11 @@ impl<'a> Private<'a> {
                         // message: response.text().await.unwrap(),
                         message: response.text().await.unwrap_or_else(|e| e.to_string()),
                     };
-                    return Err(Box::new(error));
+                    return Err(DydxErrorWithSend::new(&format!("{error:?}")));
                 }
             },
             Err(err) => {
-                return Err(Box::new(err));
+                return Err(DydxErrorWithSend::new(&format!("{err:?}")));
             }
         };
     }
