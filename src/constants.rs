@@ -4,8 +4,8 @@ pub const ASSET_USDC_CONTRACT_MAINNET: &str = "0xA0b86991c6218b36c1d19D4a2e9Eb0c
 pub const ASSET_USDC_CONTRACT_ROPSTEN: &str = "0x8707A5bf4C2842d46B31A405Ba41b858C0F876c4";
 pub const COLLATERAL_TOKEN_DECIMALS: u8 = 6;
 
-pub const MAINNET_API_URL: &str = "https://api.dydx.exchange";
-pub const TESTNET_API_URL: &str = "https://api.stage.dydx.exchange";
+pub const MAINNET_API_URL: &str = "https://indexer.dydx.trade";
+pub const TESTNET_API_URL: &str = "https://indexer.v4testnet.dydx.exchange";
 pub const TESTNET_NETWORK_ID: usize = 11155111; // Goerli
 
 // chrome test account

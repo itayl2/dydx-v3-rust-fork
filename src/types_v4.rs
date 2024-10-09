@@ -143,7 +143,7 @@ impl APIOrderStatus {
             _ => false,
         }
     }
-    
+
     pub fn is_closed(&self) -> bool {
         self.is_canceled() || self.is_filled()
     }
@@ -158,9 +158,9 @@ pub struct AddressResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SubaccountResponseObject {
+pub struct SubaccountResponseInnerObject {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub equity: String,
     pub free_collateral: String,
     pub open_perpetual_positions: PerpetualPositionsMap,
@@ -170,11 +170,25 @@ pub struct SubaccountResponseObject {
     pub latest_processed_block_height: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubaccountResponseObject {
+    pub subaccount: SubaccountResponseInnerObject,
+}
+
 impl Default for SubaccountResponseObject {
     fn default() -> Self {
         Self {
+            subaccount: SubaccountResponseInnerObject::default(),
+        }
+    }
+}
+
+impl Default for SubaccountResponseInnerObject {
+    fn default() -> Self {
+        Self {
             address: String::default(),
-            subaccount_number: f64::default(),
+            subaccount_number: i32::default(),
             equity: String::default(),
             free_collateral: String::default(),
             open_perpetual_positions: PerpetualPositionsMap::default(),
@@ -186,7 +200,7 @@ impl Default for SubaccountResponseObject {
     }
 }
 
-impl SubaccountResponseObject {
+impl SubaccountResponseInnerObject {
     pub fn get_quote_balance(&self) -> String {
         match self.asset_positions.get("USDC") {
             Some(position) => position.size.clone(),
@@ -397,7 +411,7 @@ export interface FillResponseObject {
   subaccountNumber: number,
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FillResponseObject {
     pub id: String,
@@ -410,12 +424,12 @@ pub struct FillResponseObject {
     pub price: String,
     pub size: String,
     pub fee: String,
-    pub affiliate_rev_share: String,
+    pub affiliate_rev_share: Option<String>,
     pub created_at: String,
     pub created_at_height: String,
     pub order_id: Option<String>,
     pub client_metadata: Option<String>,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 /**
@@ -655,7 +669,7 @@ export enum MarketType {
   SPOT = 'SPOT',
 }
  **/
-#[derive(Debug, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString, Clone)]
 pub enum MarketType {
     #[serde(rename = "PERPETUAL")]
     Perpetual,

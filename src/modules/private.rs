@@ -146,7 +146,7 @@ impl<'a> Private<'a> {
             parameters.push(("returnLatestOrders", local_var));
         }
         let response = self
-            .retry_wrapper("orders", Vec::new(), json!({}), Some("get_orders"))
+            .retry_wrapper("orders", parameters, json!({}), Some("get_orders"))
             .await;
         response
     }
@@ -211,7 +211,7 @@ impl<'a> Private<'a> {
         }
     }
 
-    async fn retry_wrapper<T: for<'de> Deserialize<'de>, V: Serialize + Clone>(
+    async fn retry_wrapper<T: for<'de> Deserialize<'de>, V: Serialize + Clone + Debug>(
         &self,
         path: &str,
         parameters: Vec<(&str, &str)>,
@@ -287,7 +287,7 @@ impl<'a> Private<'a> {
         };
     }
 
-    async fn request<T: for<'de> Deserialize<'de>, V: Serialize>(
+    async fn request<T: for<'de> Deserialize<'de>, V: Serialize + Debug>(
         &self,
         path: &str,
         method: Method,
@@ -298,12 +298,21 @@ impl<'a> Private<'a> {
         let url = format!("{}/v4/{}", &self.host, path);
 
         let req_builder = match method {
-            Method::GET => self.client.get(url),
-            Method::POST => self.client.post(url),
-            Method::PUT => self.client.put(url),
-            Method::DELETE => self.client.delete(url),
-            _ => self.client.get(url),
+            Method::GET => self.client.get(url.clone()),
+            Method::POST => self.client.post(url.clone()),
+            Method::PUT => self.client.put(url.clone()),
+            Method::DELETE => self.client.delete(url.clone()),
+            _ => self.client.get(url.clone()),
         };
+
+        // let another_req_builder = match method {
+        //     Method::GET => self.client.get(url.clone()),
+        //     Method::POST => self.client.post(url.clone()),
+        //     Method::PUT => self.client.put(url.clone()),
+        //     Method::DELETE => self.client.delete(url.clone()),
+        //     _ => self.client.get(url.clone()),
+        // };
+        // let another_req_builder = another_req_builder.query(&parameters).json(&data);
 
         let req_builder = req_builder
             .query(&parameters);
@@ -313,6 +322,8 @@ impl<'a> Private<'a> {
         } else {
             req_builder
         };
+        // let text_response = another_req_builder.send().await.unwrap().text().await.unwrap();
+        // println!("text_response: {text_response}");
         let response = req_builder.send().await;
 
         match response {
@@ -325,6 +336,7 @@ impl<'a> Private<'a> {
                     };
                 }
                 _ => {
+                    eprintln!("Error for url {url}, parameters: {parameters:?}, data: {data:?}");
                     let error = ResponseError {
                         code: response.status().to_string(),
                         // message: response.text().await.unwrap(),
