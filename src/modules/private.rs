@@ -95,14 +95,9 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: Option<i64>, good_til_block: Option<i64>) -> ResultWithSend<InternalApiResponse> {
+    pub async fn cancel_order(&self, cancel_params: CancelOrderParams) -> ResultWithSend<InternalApiResponse> {
         let response = self
-            .internal_request("cancel_order", Method::DELETE, Vec::new(), json!({
-                "market": market,
-                "client_id": client_id,
-                "good_til_block_time": good_til_block_time,
-                "good_til_block": good_til_block,
-            }))
+            .internal_request("cancel_order", Method::DELETE, Vec::new(), cancel_params)
             .await;
         response
     }

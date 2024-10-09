@@ -26,11 +26,14 @@ pub struct ApiOrderParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CancelOrderParams {
     pub market: String,
     pub client_id: String,
-    pub good_til_block_time: i64,
+    pub good_til_block_time: Option<i64>,
+    pub good_til_block: Option<i64>,
 }
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InternalApiResponse {
