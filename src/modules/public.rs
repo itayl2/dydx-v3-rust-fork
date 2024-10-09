@@ -7,7 +7,7 @@ use serde::Deserialize;
 use std::time::Duration;
 use backon::Retryable;
 use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
-
+use crate::types_v4::PerpetualMarketResponse;
 pub use super::super::types::*;
 
 #[readonly::make]
@@ -48,7 +48,7 @@ impl<'a> Public<'a> {
         }
     }
 
-    pub async fn get_markets(&self, ticker: Option<&str>) -> Result<MarketsResponse> {
+    pub async fn get_markets(&self, ticker: Option<&str>) -> Result<PerpetualMarketResponse> {
         let mut parameter = Vec::new();
         if let Some(local_var) = ticker {
             parameter.push(("ticker", local_var));
@@ -270,8 +270,12 @@ impl<'a> Public<'a> {
         path: &str,
         parameters: Vec<(&str, &str)>,
     ) -> Result<S> {
-        let url = format!("{}/v3/{}", &self.host, path);
-        let req_builder = self.client.get(url).query(&parameters);
+        let url = format!("{}/v4/{}", &self.host, path);
+        let req_builder = self.client.get(url.clone()).query(&parameters);
+        // let another_req_builder = self.client.get(url.clone()).query(&parameters);
+        // let another_response = another_req_builder.send().await;
+        // let text_response = another_response.unwrap().text().await.unwrap();
+        // println!("text_response: {text_response}");
         let response = req_builder.send().await;
 
         match response {
@@ -284,6 +288,7 @@ impl<'a> Public<'a> {
                     };
                 }
                 _ => {
+                    eprintln!("Error for url {url}");
                     let error = ResponseError {
                         code: response.status().to_string(),
                         // message: response.text().await.unwrap(),
@@ -299,7 +304,7 @@ impl<'a> Public<'a> {
     }
 
     async fn put(&self, path: &str, parameters: &[(&str, &str)]) -> Result<StatusCode> {
-        let url = format!("{}/v3/{}", &self.host, path);
+        let url = format!("{}/v4/{}", &self.host, path);
         let req_builder = self.client.put(url).query(parameters);
         let result = req_builder.send().await?;
         Ok(result.status())

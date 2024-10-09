@@ -90,17 +90,18 @@ impl<'a> Private<'a> {
 
     pub async fn create_order(&self, user_params: ApiOrderParams) -> ResultWithSend<InternalApiResponse> {
         let response = self
-            .internal_request("orders", Method::POST, Vec::new(), user_params)
+            .internal_request("create_order", Method::POST, Vec::new(), user_params)
             .await;
         response
     }
 
-    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: i64) -> ResultWithSend<InternalApiResponse> {
+    pub async fn cancel_order(&self, market: &str, client_id: &str, good_til_block_time: Option<i64>, good_til_block: Option<i64>) -> ResultWithSend<InternalApiResponse> {
         let response = self
             .internal_request("cancel_order", Method::DELETE, Vec::new(), json!({
                 "market": market,
                 "client_id": client_id,
                 "good_til_block_time": good_til_block_time,
+                "good_til_block": good_til_block,
             }))
             .await;
         response
@@ -245,6 +246,7 @@ impl<'a> Private<'a> {
         let json = to_string(&data).unwrap();
         let url = format!("{}/{}", &self.internal_host, path);
 
+        println!("Sending internal request to {}", url);
         let req_builder = match method {
             Method::GET => self.client.get(url),
             Method::POST => self.client.post(url),

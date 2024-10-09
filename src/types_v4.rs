@@ -6,6 +6,7 @@ use strum_macros::{Display, EnumString};
 pub type OrdersResponse = Vec<OrderResponseObject>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ApiOrderParams {
     pub market: String,
     pub side: OrderSide,
@@ -36,6 +37,7 @@ pub struct InternalApiResponse {
     pub hash: String,
     pub code: i64,
     pub raw_log: String,
+    pub extra: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,12 +49,12 @@ pub struct OrderResponse {
 #[serde(rename_all = "camelCase")]
 pub struct OrderResponseObject {
     pub id: String,
-    pub subaccount_id: String,
+    pub subaccount_id: Option<String>,
     pub client_id: String,
     pub clob_pair_id: String,
     pub side: OrderSide,
     pub size: String,
-    pub total_filled: String,
+    pub total_filled: Option<String>,
     pub price: String,
     #[serde(rename = "type")]
     pub order_type: OrderType,
@@ -69,7 +71,7 @@ pub struct OrderResponseObject {
     pub ticker: String,
     pub updated_at: Option<String>,
     pub updated_at_height: Option<String>,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
@@ -214,7 +216,7 @@ impl SubaccountResponseInnerObject {
 #[serde(rename_all = "camelCase")]
 pub struct SubaccountWebSocketObject {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub equity: String,
     pub free_collateral: String,
     pub open_perpetual_positions: PerpetualPositionsMap,
@@ -243,7 +245,7 @@ pub struct PerpetualPositionResponseObject {
     pub unrealized_pnl: String,
     pub closed_at: Option<String>,
     pub exit_price: Option<String>,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
@@ -266,7 +268,7 @@ pub struct AssetPositionResponseObject {
     pub side: PositionSide,
     pub size: String,
     pub asset_id: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 /**
@@ -721,9 +723,9 @@ pub struct PerpetualMarketResponseObject {
     pub ticker: String,
     pub status: PerpetualMarketStatus,
     pub oracle_price: String,
-    pub price_change_24h: String,
-    pub volume_24h: String,
-    pub trades_24h: i64,
+    pub price_change24H: String,
+    pub volume24H: String,
+    pub trades24H: i64,
     pub next_funding_rate: String,
     pub initial_margin_fraction: String,
     pub maintenance_margin_fraction: String,
@@ -878,7 +880,7 @@ export interface SubaccountRequest extends AddressRequest {
 #[serde(rename_all = "camelCase")]
 pub struct SubaccountRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 /**
@@ -986,7 +988,7 @@ export interface PerpetualPositionRequest extends SubaccountRequest, LimitAndCre
 #[serde(rename_all = "camelCase")]
 pub struct PerpetualPositionRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub limit: f64,
     pub created_before_or_at_height: Option<f64>,
     pub created_before_or_at: Option<String>,
@@ -1017,7 +1019,7 @@ export interface AssetPositionRequest extends SubaccountRequest {}
 #[serde(rename_all = "camelCase")]
 pub struct AssetPositionRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
 }
 
 /**
@@ -1038,7 +1040,7 @@ export interface TransferRequest
 #[serde(rename_all = "camelCase")]
 pub struct TransferRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub limit: f64,
     pub created_before_or_at_height: Option<f64>,
     pub created_before_or_at: Option<String>,
@@ -1092,7 +1094,7 @@ export interface FillRequest
 #[serde(rename_all = "camelCase")]
 pub struct FillRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub limit: f64,
     pub created_before_or_at_height: Option<f64>,
     pub created_before_or_at: Option<String>,
@@ -1153,7 +1155,7 @@ export interface PnlTicksRequest
 #[serde(rename_all = "camelCase")]
 pub struct PnlTicksRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub limit: f64,
     pub created_before_or_at_height: Option<f64>,
     pub created_before_or_at: Option<String>,
@@ -1213,7 +1215,7 @@ export interface ListOrderRequest extends SubaccountRequest, LimitRequest, Ticke
 #[serde(rename_all = "camelCase")]
 pub struct ListOrderRequest {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub limit: f64,
     pub ticker: Option<String>,
     pub side: Option<OrderSide>,
@@ -1515,7 +1517,7 @@ export interface TraderSearchResponseObject {
 #[serde(rename_all = "camelCase")]
 pub struct TraderSearchResponseObject {
     pub address: String,
-    pub subaccount_number: f64,
+    pub subaccount_number: i32,
     pub subaccount_id: String,
     pub username: String,
 }
