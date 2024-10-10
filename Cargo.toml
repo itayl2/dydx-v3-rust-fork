@@ -18,7 +18,7 @@ dummy_signature = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pyo3 = {version = "0.16.4", features = ["auto-initialize"]}
+#pyo3 = {version = "0.16.4", features = ["auto-initialize"]}
 hex = "0.4.3"
 hex-literal = "0.3"
 tokio = { version= "1", features = ["full"] }
