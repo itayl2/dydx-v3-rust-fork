@@ -7,6 +7,21 @@ pub type OrdersResponse = Vec<OrderResponseObject>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct PriceStepParams {
+    pub market: String,
+    pub price: String,
+    pub size: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PriceStepObject {
+    pub price: String,
+    pub size: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ApiOrderParams {
     pub market: String,
     pub side: OrderSide,

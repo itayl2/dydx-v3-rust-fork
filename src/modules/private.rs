@@ -88,6 +88,13 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub async fn get_price_step(&self, params: PriceStepParams) -> ResultWithSend<PriceStepObject> {
+        let response = self
+            .internal_request("get_price_step", Method::GET, Vec::new(), params)
+            .await;
+        response
+    }
+
     pub async fn create_order(&self, user_params: ApiOrderParams) -> ResultWithSend<InternalApiResponse> {
         let response = self
             .internal_request("create_order", Method::POST, Vec::new(), user_params)
