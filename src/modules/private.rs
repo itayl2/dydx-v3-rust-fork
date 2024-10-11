@@ -88,6 +88,13 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub async fn get_order_size(&self, params: OrderSizeParams) -> ResultWithSend<OrderSizeObject> {
+        let response = self
+            .internal_request("get_order_size", Method::GET, Vec::new(), params)
+            .await;
+        response
+    }
+
     pub async fn get_price_step(&self, params: PriceStepParams) -> ResultWithSend<PriceStepObject> {
         let response = self
             .internal_request("get_price_step", Method::GET, Vec::new(), params)
