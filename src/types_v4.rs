@@ -747,7 +747,7 @@ export interface PerpetualMarketResponseObject {
   baseOpenInterest: string,
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PerpetualMarketResponseObject {
     pub clob_pair_id: String,
