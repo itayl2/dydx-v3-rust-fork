@@ -717,7 +717,7 @@ export interface PerpetualMarketResponse {
   },
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PerpetualMarketResponse {
     pub markets: HashMap<String, PerpetualMarketResponseObject>,
 }
