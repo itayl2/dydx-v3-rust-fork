@@ -102,7 +102,7 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn create_order(&self, user_params: ApiOrderParams) -> ResultWithSend<InternalApiResponse> {
+    pub async fn create_order<V: Serialize>(&self, user_params: V) -> ResultWithSend<InternalApiResponse> {
         let response = self
             .internal_request("create_order", Method::POST, Vec::new(), user_params)
             .await;
