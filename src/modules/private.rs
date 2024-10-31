@@ -102,14 +102,14 @@ impl<'a> Private<'a> {
         response
     }
 
-    pub async fn create_order<V: Serialize>(&self, user_params: V) -> ResultWithSend<InternalApiResponse> {
+    pub async fn create_order<V: Serialize>(&self, user_params: V) -> ResultWithSend<CreateOrderResponse> {
         let response = self
             .internal_request("create_order", Method::POST, Vec::new(), user_params)
             .await;
         response
     }
 
-    pub async fn cancel_order(&self, cancel_params: CancelOrderParams) -> ResultWithSend<InternalApiResponse> {
+    pub async fn cancel_order(&self, cancel_params: CancelOrderParams) -> ResultWithSend<CancelOrderResponse> {
         let response = self
             .internal_request("cancel_order", Method::DELETE, Vec::new(), cancel_params)
             .await;
@@ -359,6 +359,7 @@ impl<'a> Private<'a> {
         } else {
             req_builder
         };
+        let final_url = req_builder.url().to_string();
         // let text_response = another_req_builder.send().await.unwrap().text().await.unwrap();
         // println!("text_response: {text_response}");
         let response = req_builder.send().await;

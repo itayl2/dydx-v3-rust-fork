@@ -14,6 +14,7 @@ categories = ["api-bindings"]
 
 [features]
 dummy_signature = []
+backtest = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

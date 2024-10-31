@@ -5,6 +5,16 @@ use strum_macros::{Display, EnumString};
 
 pub type OrdersResponse = Vec<OrderResponseObject>;
 
+#[cfg(not(feature = "backtest"))]
+pub type CreateOrderResponse = InternalApiResponse;
+#[cfg(feature = "backtest")]
+pub type CreateOrderResponse = OrderResponseObject;
+
+#[cfg(not(feature = "backtest"))]
+pub type CancelOrderResponse = InternalApiResponse;
+#[cfg(feature = "backtest")]
+pub type CancelOrderResponse = OrderResponseObject;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderSizeParams {
