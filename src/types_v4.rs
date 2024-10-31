@@ -70,6 +70,8 @@ pub struct CancelOrderParams {
     pub client_id: String,
     pub good_til_block_time: Option<i64>,
     pub good_til_block: Option<i64>,
+    #[cfg(feature = "backtest")]
+    pub order_id: String,
 }
 
 
