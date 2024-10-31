@@ -156,7 +156,7 @@ impl<'a> Private<'a> {
             parameters.push(("returnLatestOrders", local_var));
         }
         let response = self
-            .retry_wrapper("orders", parameters, json!({}), Some("get_orders"))
+            .retry_wrapper_with_send("orders", parameters, json!({}), Some("get_orders"))
             .await;
         response
     }
@@ -245,6 +245,30 @@ impl<'a> Private<'a> {
         result
     }
 
+    async fn retry_wrapper_with_send<T: for<'de> Deserialize<'de>, V: Serialize + Clone + Debug>(
+        &self,
+        path: &str,
+        parameters: Vec<(&str, &str)>,
+        data: V,
+        retry_snippet: Option<&str>,
+    ) -> ResultWithSend<T> {
+        let retry_snippet = match retry_snippet {
+            Some(local_var) => local_var,
+            None => return self.request_with_send(path, Method::GET, parameters, data).await,
+        };
+        let backoff = self.retry_backoff_getter.get(retry_snippet);
+
+        // println!("Will use backoff: {backoff:?} for {retry_snippet:?}");
+        let closure = || async { self.request_with_send(path, Method::GET, parameters.clone(), data.clone()).await };
+        let result = closure
+            .retry(backoff)
+            .notify(|err: &Box<dyn std::error::Error>, dur: Duration| {
+                self.retry_notify(retry_snippet, err, dur);
+            })
+            .await;
+        result
+    }
+
     async fn internal_request<T: for<'de> Deserialize<'de>, V: Serialize>(
         &self,
         path: &str,
@@ -272,6 +296,69 @@ impl<'a> Private<'a> {
         } else {
             req_builder
         };
+        let response = req_builder.send().await;
+
+        match response {
+            Ok(response) => match response.status() {
+                StatusCode::OK | StatusCode::CREATED => {
+                    // return Ok(response.json::<T>().await.unwrap())
+                    return match response.json::<T>().await {
+                        Ok(r) => Ok(r),
+                        Err(e) => Err(DydxErrorWithSend::new(&format!("{e:?}"))),
+                    };
+                }
+                _ => {
+                    let error = ResponseError {
+                        code: response.status().to_string(),
+                        // message: response.text().await.unwrap(),
+                        message: response.text().await.unwrap_or_else(|e| e.to_string()),
+                    };
+                    return Err(DydxErrorWithSend::new(&format!("{error:?}")));
+                }
+            },
+            Err(err) => {
+                return Err(DydxErrorWithSend::new(&format!("{err:?}")));
+            }
+        };
+    }
+
+    async fn request_with_send<T: for<'de> Deserialize<'de>, V: Serialize + Debug>(
+        &self,
+        path: &str,
+        method: Method,
+        parameters: Vec<(&str, &str)>,
+        data: V,
+    ) -> ResultWithSend<T> {
+        let json = to_string(&data).unwrap();
+        let url = format!("{}/v4/{}", &self.host, path);
+
+        let req_builder = match method {
+            Method::GET => self.client.get(url.clone()),
+            Method::POST => self.client.post(url.clone()),
+            Method::PUT => self.client.put(url.clone()),
+            Method::DELETE => self.client.delete(url.clone()),
+            _ => self.client.get(url.clone()),
+        };
+
+        // let another_req_builder = match method {
+        //     Method::GET => self.client.get(url.clone()),
+        //     Method::POST => self.client.post(url.clone()),
+        //     Method::PUT => self.client.put(url.clone()),
+        //     Method::DELETE => self.client.delete(url.clone()),
+        //     _ => self.client.get(url.clone()),
+        // };
+        // let another_req_builder = another_req_builder.query(&parameters).json(&data);
+
+        let req_builder = req_builder
+            .query(&parameters);
+
+        let req_builder = if json != "{}" {
+            req_builder.json(&data)
+        } else {
+            req_builder
+        };
+        // let text_response = another_req_builder.send().await.unwrap().text().await.unwrap();
+        // println!("text_response: {text_response}");
         let response = req_builder.send().await;
 
         match response {
