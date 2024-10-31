@@ -126,7 +126,7 @@ impl<'a> Private<'a> {
         good_til_block_before_or_at: Option<&str>,
         good_til_block_time_before_or_at: Option<&str>,
         return_latest_orders: Option<&str>,
-    ) -> Result<OrdersResponse> {
+    ) -> ResultWithSend<OrdersResponse> {
         let mut parameters = Vec::new();
         parameters.push(("address", self.eth_address));
         parameters.push(("subaccountNumber", self.subaccount_number));
