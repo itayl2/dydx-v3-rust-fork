@@ -161,6 +161,32 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub async fn get_orders_with_send(
+        &self,
+        ticker: Option<&str>,
+        status: Option<&str>,
+        side: Option<&str>,
+        type_field: Option<&str>,
+        limit: Option<&str>,
+        good_til_block_before_or_at: Option<&str>,
+        good_til_block_time_before_or_at: Option<&str>,
+        return_latest_orders: Option<&str>,
+    ) -> ResultWithSend<OrdersResponse> {
+        match self.get_orders(
+            ticker,
+            status,
+            side,
+            type_field,
+            limit,
+            good_til_block_before_or_at,
+            good_til_block_time_before_or_at,
+            return_latest_orders,
+        ).await {
+            Ok(response) => Ok(response),
+            Err(e) => Err(e.into()),
+        }
+    }
+
     pub async fn get_order_by_id(&self, id: &str) -> Result<OrderResponseObject> {
         let path = format!("orders/{}", id);
         let response = self
