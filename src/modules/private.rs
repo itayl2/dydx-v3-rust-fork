@@ -359,7 +359,6 @@ impl<'a> Private<'a> {
         } else {
             req_builder
         };
-        let final_url = req_builder.url().to_string();
         // let text_response = another_req_builder.send().await.unwrap().text().await.unwrap();
         // println!("text_response: {text_response}");
         let response = req_builder.send().await;
