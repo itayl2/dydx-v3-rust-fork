@@ -124,7 +124,7 @@ pub enum OrderSide {
     Sell,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
     Limit,
