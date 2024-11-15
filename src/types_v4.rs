@@ -154,6 +154,10 @@ pub enum APIOrderStatus {
 }
 
 impl APIOrderStatus {
+    pub fn is_open(&self) -> bool {
+        Self::get_open_statuses().contains(self)
+    }
+
     pub fn get_open_statuses() -> Vec<Self> {
         vec![Self::BestEffortOpened, Self::Open, Self::Untriggered]
     }
