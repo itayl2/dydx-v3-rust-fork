@@ -297,7 +297,7 @@ pub enum PerpetualPositionStatus {
     LIQUIDATED,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum PositionSide {
     LONG,
     SHORT,
