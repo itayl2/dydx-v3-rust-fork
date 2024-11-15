@@ -139,7 +139,6 @@ pub enum OrderType {
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum APITimeInForce {
     GTT,
-    FOK,
     IOC,
 }
 
