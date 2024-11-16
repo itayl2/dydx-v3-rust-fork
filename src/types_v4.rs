@@ -68,6 +68,7 @@ pub struct ApiOrderParams {
 pub struct CancelOrderParams {
     pub market: String,
     pub client_id: String,
+    pub order_type: OrderType,
     pub good_til_block_time: Option<i64>,
     pub good_til_block: Option<i64>,
     #[cfg(feature = "backtest")]
