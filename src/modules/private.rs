@@ -195,6 +195,40 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub async fn get_fills_one_page(
+        &self,
+        market: Option<&str>,
+        market_type: Option<&str>,
+        limit: Option<&str>,
+        created_before_or_at_height: Option<&str>,
+        created_before_or_at: Option<&str>,
+    ) -> Result<FillResponseSinglePage> {
+        let mut parameters = Vec::new();
+        parameters.push(("address", self.eth_address));
+        parameters.push(("subaccountNumber", self.subaccount_number));
+
+        if let Some(local_var) = market {
+            parameters.push(("market", local_var));
+        }
+        if let Some(local_var) = market_type {
+            parameters.push(("marketType", local_var));
+        }
+        if let Some(local_var) = limit {
+            parameters.push(("limit", local_var));
+        }
+        if let Some(local_var) = created_before_or_at_height {
+            parameters.push(("createdBeforeOrAtHeight", local_var));
+        }
+        if let Some(local_var) = created_before_or_at {
+            parameters.push(("createdBeforeOrAt", local_var));
+        }
+
+        let response = self
+            .retry_wrapper("fills", parameters, json!({}), Some("get_fills_one_page"))
+            .await;
+        response
+    }
+
     pub async fn get_fills(
         &self,
         market: Option<&str>,

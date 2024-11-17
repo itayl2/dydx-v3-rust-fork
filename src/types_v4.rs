@@ -462,6 +462,11 @@ pub struct FillResponse {
     pub fills: Vec<FillResponseObject>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FillResponseSinglePage {
+    pub fills: Vec<FillResponseObject>,
+}
+
 /**
 export interface FillResponseObject {
   id: string,
