@@ -132,9 +132,21 @@ pub enum OrderType {
     Market,
     StopLimit,
     StopMarket,
-    TrailingStop,
     TakeProfit,
     TakeProfitMarket,
+}
+
+impl OrderType {
+    pub fn requires_trigger_price(&self) -> bool {
+        match self {
+            OrderType::Limit => false,
+            OrderType::Market => false,
+            OrderType::StopLimit => true,
+            OrderType::StopMarket => true,
+            OrderType::TakeProfit => true,
+            OrderType::TakeProfitMarket => true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
@@ -167,14 +179,14 @@ impl APIOrderStatus {
         vec![Self::Filled, Self::Canceled, Self::BestEffortCanceled]
     }
 
-    pub fn get_step_number(&self) -> usize {
+    pub fn get_step_number(&self) -> f64 {
         match self {
-            Self::Untriggered => 0,
-            Self::BestEffortOpened => 1,
-            Self::Open => 1,
-            Self::Filled => 2,
-            Self::Canceled => 2,
-            Self::BestEffortCanceled => 2,
+            Self::BestEffortOpened => 0.0,
+            Self::Untriggered => 1.0,
+            Self::Open => 1.0,
+            Self::BestEffortCanceled => 1.5,
+            Self::Canceled => 2.0,
+            Self::Filled => 2.0,
         }
     }
 
