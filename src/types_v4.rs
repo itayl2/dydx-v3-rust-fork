@@ -118,6 +118,15 @@ pub struct OrderResponseObject {
     pub subaccount_number: i32,
 }
 
+impl OrderResponseObject {
+    pub fn get_total_filled(&self) -> String {
+        match self.total_filled.as_ref() {
+            Some(total_filled) => total_filled.clone(),
+            None => "0".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
