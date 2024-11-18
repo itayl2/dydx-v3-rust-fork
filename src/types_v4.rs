@@ -1,6 +1,7 @@
 use std::any::Any;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use rust_decimal::Decimal;
 use strum_macros::{Display, EnumString};
 
 pub type OrdersResponse = Vec<OrderResponseObject>;
@@ -49,8 +50,8 @@ pub struct ApiOrderParams {
     pub market: String,
     pub side: OrderSide,
     pub order_type: OrderType,
-    pub size: String,
-    pub price: String,
+    pub size: Decimal,
+    pub price: Decimal,
     pub time_in_force: APITimeInForce,
     pub client_id: String,
     pub reduce_only: bool,
@@ -97,9 +98,9 @@ pub struct OrderResponseObject {
     pub client_id: String,
     pub clob_pair_id: String,
     pub side: OrderSide,
-    pub size: String,
-    pub total_filled: Option<String>,
-    pub price: String,
+    pub size: Decimal,
+    pub total_filled: Option<Decimal>,
+    pub price: Decimal,
     #[serde(rename = "type")]
     pub order_type: OrderType,
     pub reduce_only: bool,
@@ -108,7 +109,7 @@ pub struct OrderResponseObject {
     pub good_til_block_time: Option<String>,
     pub created_at_height: Option<String>,
     pub client_metadata: String,
-    pub trigger_price: Option<String>,
+    pub trigger_price: Option<Decimal>,
     pub time_in_force: APITimeInForce,
     pub status: APIOrderStatus,
     pub post_only: bool,
@@ -119,10 +120,10 @@ pub struct OrderResponseObject {
 }
 
 impl OrderResponseObject {
-    pub fn get_total_filled(&self) -> String {
+    pub fn get_total_filled(&self) -> Decimal {
         match self.total_filled.as_ref() {
             Some(total_filled) => total_filled.clone(),
-            None => "0".to_string(),
+            None => Decimal::ZERO,
         }
     }
 }
@@ -176,6 +177,17 @@ pub enum APIOrderStatus {
 }
 
 impl APIOrderStatus {
+    pub fn get_verb(&self) -> String {
+        match self {
+            Self::Untriggered => "created",
+            Self::Open => "opened",
+            Self::BestEffortOpened => "opened",
+            Self::Filled => "filled",
+            Self::Canceled => "canceled",
+            Self::BestEffortCanceled => "canceled",
+        }.to_string()
+    }
+
     pub fn is_open(&self) -> bool {
         Self::get_open_statuses().contains(self)
     }
@@ -231,8 +243,8 @@ pub struct AddressResponse {
 pub struct SubaccountResponseInnerObject {
     pub address: String,
     pub subaccount_number: i32,
-    pub equity: String,
-    pub free_collateral: String,
+    pub equity: Decimal,
+    pub free_collateral: Decimal,
     pub open_perpetual_positions: PerpetualPositionsMap,
     pub asset_positions: AssetPositionsMap,
     pub margin_enabled: bool,
@@ -259,8 +271,8 @@ impl Default for SubaccountResponseInnerObject {
         Self {
             address: String::default(),
             subaccount_number: i32::default(),
-            equity: String::default(),
-            free_collateral: String::default(),
+            equity: Decimal::ZERO,
+            free_collateral: Decimal::ZERO,
             open_perpetual_positions: PerpetualPositionsMap::default(),
             asset_positions: AssetPositionsMap::default(),
             margin_enabled: false,
@@ -271,10 +283,10 @@ impl Default for SubaccountResponseInnerObject {
 }
 
 impl SubaccountResponseInnerObject {
-    pub fn get_quote_balance(&self) -> String {
+    pub fn get_quote_balance(&self) -> Decimal {
         match self.asset_positions.get("USDC") {
             Some(position) => position.size.clone(),
-            None => "0.0".to_string(),
+            None => Decimal::ZERO,
         }
     }
 }
@@ -285,8 +297,8 @@ impl SubaccountResponseInnerObject {
 pub struct SubaccountWebSocketObject {
     pub address: String,
     pub subaccount_number: i32,
-    pub equity: String,
-    pub free_collateral: String,
+    pub equity: Decimal,
+    pub free_collateral: Decimal,
     pub open_perpetual_positions: PerpetualPositionsMap,
     pub asset_positions: AssetPositionsMap,
     pub margin_enabled: bool,
@@ -301,18 +313,18 @@ pub struct PerpetualPositionResponseObject {
     pub market: String,
     pub status: PerpetualPositionStatus,
     pub side: PositionSide,
-    pub size: String,
-    pub max_size: String,
-    pub entry_price: String,
-    pub realized_pnl: String,
+    pub size: Decimal,
+    pub max_size: Decimal,
+    pub entry_price: Decimal,
+    pub realized_pnl: Decimal,
     pub created_at: String,
     pub created_at_height: String,
-    pub sum_open: String,
-    pub sum_close: String,
-    pub net_funding: String,
-    pub unrealized_pnl: String,
+    pub sum_open: Decimal,
+    pub sum_close: Decimal,
+    pub net_funding: Decimal,
+    pub unrealized_pnl: Decimal,
     pub closed_at: Option<String>,
-    pub exit_price: Option<String>,
+    pub exit_price: Option<Decimal>,
     pub subaccount_number: i32,
 }
 
@@ -334,7 +346,7 @@ pub enum PositionSide {
 pub struct AssetPositionResponseObject {
     pub symbol: String,
     pub side: PositionSide,
-    pub size: String,
+    pub size: Decimal,
     pub asset_id: String,
     pub subaccount_number: i32,
 }
@@ -395,8 +407,8 @@ export interface ParentSubaccountResponse {
 pub struct ParentSubaccountResponse {
     pub address: String,
     pub parent_subaccount_number: u64,
-    pub equity: String,
-    pub free_collateral: String,
+    pub equity: Decimal,
+    pub free_collateral: Decimal,
     pub child_subaccounts: Vec<SubaccountResponseObject>,
 }
 
@@ -496,9 +508,9 @@ pub struct FillResponseObject {
     pub fill_type: FillType,
     pub market: String,
     pub market_type: MarketType,
-    pub price: String,
-    pub size: String,
-    pub fee: String,
+    pub price: Decimal,
+    pub size: Decimal,
+    pub fee: Decimal,
     pub affiliate_rev_share: Option<String>,
     pub created_at: String,
     pub created_at_height: String,
@@ -658,7 +670,7 @@ export interface PnlTicksResponseObject {
 pub struct PnlTicksResponseObject {
     pub id: String,
     pub subaccount_id: String,
-    pub equity: String,
+    pub equity: Decimal,
     pub total_pnl: String,
     pub net_transfers: String,
     pub created_at: String,
@@ -795,24 +807,24 @@ pub struct PerpetualMarketResponseObject {
     pub clob_pair_id: String,
     pub ticker: String,
     pub status: PerpetualMarketStatus,
-    pub oracle_price: String,
-    pub price_change24H: String,
-    pub volume24H: String,
+    pub oracle_price: Decimal,
+    pub price_change24H: Decimal,
+    pub volume24H: Decimal,
     pub trades24H: i64,
-    pub next_funding_rate: String,
-    pub initial_margin_fraction: String,
-    pub maintenance_margin_fraction: String,
-    pub open_interest: String,
+    pub next_funding_rate: Decimal,
+    pub initial_margin_fraction: Decimal,
+    pub maintenance_margin_fraction: Decimal,
+    pub open_interest: Decimal,
     pub atomic_resolution: i64,
     pub quantum_conversion_exponent: i64,
-    pub tick_size: String,
-    pub step_size: String,
+    pub tick_size: Decimal,
+    pub step_size: Decimal,
     pub step_base_quantums: i64,
     pub subticks_per_tick: i64,
     pub market_type: PerpetualMarketType,
     pub open_interest_lower_cap: Option<String>,
     pub open_interest_upper_cap: Option<String>,
-    pub base_open_interest: String,
+    pub base_open_interest: Decimal,
 }
 
 pub type PriceLevel = Vec<String>;
@@ -870,10 +882,10 @@ pub struct CandleResponseObject {
     pub started_at: String,
     pub ticker: String,
     pub resolution: CandleResolution,
-    pub low: String,
-    pub high: String,
-    pub open: String,
-    pub close: String,
+    pub low: Decimal,
+    pub high: Decimal,
+    pub open: Decimal,
+    pub close: Decimal,
     pub base_token_volume: String,
     pub usd_volume: String,
     pub trades: i64,
@@ -1644,7 +1656,7 @@ pub struct VaultPosition {
     pub ticker: String,
     pub asset_position: AssetPositionResponseObject,
     pub perpetual_position: Option<PerpetualPositionResponseObject>,
-    pub equity: String,
+    pub equity: Decimal,
 }
 
 /**

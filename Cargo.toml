@@ -41,6 +41,8 @@ cfg-if = "1.0.0"
 strum_macros = "0.26.4"
 strum = "0.26.3"
 anyhow = "1.0.89"
+rust_decimal = { version = "1.35.0", features = ["maths"] }
+
 
 [dev-dependencies]
 speculate = "0.1.2"
