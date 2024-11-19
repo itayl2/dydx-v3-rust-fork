@@ -1,6 +1,7 @@
 use std::any::Any;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use chrono::DateTime;
 use rust_decimal::Decimal;
 use strum_macros::{Display, EnumString};
 
@@ -126,16 +127,32 @@ impl OrderResponseObject {
             None => Decimal::ZERO,
         }
     }
+
+    // example value: "2021-01-05T16:33:43.163Z"
+    pub fn get_updated_timestamp(&self) -> Option<i64> {
+        let updated_at = match self.updated_at.as_ref() {
+            Some(updated_at) => updated_at,
+            None => return None,
+        };
+
+        match DateTime::parse_from_rfc3339(&updated_at) {
+            Ok(datetime) => Some(datetime.timestamp_millis()),
+            Err(error) => {
+                eprintln!("Failed to parse updated_at timestamp: {error:?}, updated_at: {updated_at:?}");
+                Some(0)
+            }
+        }
+    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
     Limit,
@@ -159,13 +176,13 @@ impl OrderType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 pub enum APITimeInForce {
     GTT,
     IOC,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum APIOrderStatus {
     Open,
@@ -328,7 +345,7 @@ pub struct PerpetualPositionResponseObject {
     pub subaccount_number: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum PerpetualPositionStatus {
     OPEN,
     CLOSED,
@@ -756,7 +773,7 @@ export enum MarketType {
   SPOT = 'SPOT',
 }
  **/
-#[derive(Debug, Serialize, Deserialize, Display, EnumString, Clone)]
+#[derive(Debug, Serialize, Deserialize, Display, EnumString, Clone, PartialEq, Eq, Hash)]
 pub enum MarketType {
     #[serde(rename = "PERPETUAL")]
     Perpetual,
@@ -1876,7 +1893,7 @@ export enum Liquidity {
   MAKER = 'MAKER',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum Liquidity {
     TAKER,
     MAKER,
@@ -1891,7 +1908,7 @@ export enum FillType {
   OFFSETTING = 'OFFSETTING',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum FillType {
     LIMIT,
     LIQUIDATED,
@@ -1908,7 +1925,7 @@ export enum TransferType {
   WITHDRAWAL = 'WITHDRAWAL',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum TransferType {
     TRANSFER_IN,
     TRANSFER_OUT,
@@ -1923,7 +1940,7 @@ export enum TradeType {
   DELEVERAGED = 'DELEVERAGED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum TradeType {
     LIMIT,
     LIQUIDATED,
@@ -1958,7 +1975,7 @@ export enum PerpetualMarketStatus {
   FINAL_SETTLEMENT = 'FINAL_SETTLEMENT',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum PerpetualMarketStatus {
     ACTIVE,
     PAUSED,
@@ -1974,7 +1991,7 @@ export enum PerpetualMarketType {
   ISOLATED = 'ISOLATED',
 }
  **/
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum PerpetualMarketType {
     CROSS,
     ISOLATED,
