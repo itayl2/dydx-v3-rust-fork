@@ -786,6 +786,8 @@ pub enum MarketType {
     Spot,
 }
 
+pub type PerpetualMarketResponseMap = HashMap<String, PerpetualMarketResponseObject>;
+
 /**
 export interface PerpetualMarketResponse {
   markets: {
@@ -795,7 +797,7 @@ export interface PerpetualMarketResponse {
  **/
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PerpetualMarketResponse {
-    pub markets: HashMap<String, PerpetualMarketResponseObject>,
+    pub markets: PerpetualMarketResponseMap,
 }
 
 /**
