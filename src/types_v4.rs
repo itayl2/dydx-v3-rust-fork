@@ -860,6 +860,7 @@ impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
     {
         // Define a temporary struct that matches the JSON structure
         #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
         struct TempObject {
             clob_pair_id: String,
             ticker: String,
