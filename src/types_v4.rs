@@ -1,11 +1,16 @@
 use std::any::Any;
-use serde::{Deserialize, Serialize};
+use std::cmp;
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use chrono::DateTime;
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, MathematicalOps};
+use rust_decimal::prelude::ToPrimitive;
 use strum_macros::{Display, EnumString};
 
 pub type OrdersResponse = Vec<OrderResponseObject>;
+
+const QUOTE_QUANTUMS_ATOMIC_RESOLUTION: i64 = -6;
+const USDC_ATOMIC_RESOLUTION: i64 = -6;
 
 #[cfg(not(feature = "backtest"))]
 pub type CreateOrderResponse = InternalApiResponse;
@@ -818,7 +823,7 @@ export interface PerpetualMarketResponseObject {
   baseOpenInterest: string,
 }
  **/
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PerpetualMarketResponseObject {
     pub clob_pair_id: String,
@@ -834,6 +839,7 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest: Decimal,
     pub atomic_resolution: i64,
     pub quantum_conversion_exponent: i64,
+    pub min_order_size: Decimal,
     pub tick_size: Decimal,
     pub step_size: Decimal,
     pub step_base_quantums: i64,
@@ -842,6 +848,163 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest_lower_cap: Option<String>,
     pub open_interest_upper_cap: Option<String>,
     pub base_open_interest: Decimal,
+}
+
+impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Define a temporary struct that matches the JSON structure
+        #[derive(Deserialize)]
+        struct TempObject {
+            clob_pair_id: String,
+            ticker: String,
+            status: PerpetualMarketStatus,
+            oracle_price: Decimal,
+            price_change24H: Decimal,
+            volume24H: Decimal,
+            trades24H: i64,
+            next_funding_rate: Decimal,
+            initial_margin_fraction: Decimal,
+            maintenance_margin_fraction: Decimal,
+            open_interest: Decimal,
+            atomic_resolution: i64,
+            quantum_conversion_exponent: i64,
+            tick_size: Decimal,
+            step_size: Decimal,
+            step_base_quantums: i64,
+            subticks_per_tick: i64,
+            market_type: PerpetualMarketType,
+            open_interest_lower_cap: Option<String>,
+            open_interest_upper_cap: Option<String>,
+            base_open_interest: Decimal,
+        }
+
+        // Deserialize into the temporary struct
+        let temp = TempObject::deserialize(deserializer)?;
+
+        let mut perpetual_market_response_object = PerpetualMarketResponseObject {
+            clob_pair_id: temp.clob_pair_id,
+            ticker: temp.ticker,
+            status: temp.status,
+            oracle_price: temp.oracle_price,
+            price_change24H: temp.price_change24H,
+            volume24H: temp.volume24H,
+            trades24H: temp.trades24H,
+            next_funding_rate: temp.next_funding_rate,
+            initial_margin_fraction: temp.initial_margin_fraction,
+            maintenance_margin_fraction: temp.maintenance_margin_fraction,
+            open_interest: temp.open_interest,
+            atomic_resolution: temp.atomic_resolution,
+            quantum_conversion_exponent: temp.quantum_conversion_exponent,
+            min_order_size: Decimal::ZERO,
+            tick_size: temp.tick_size,
+            step_size: temp.step_size,
+            step_base_quantums: temp.step_base_quantums,
+            subticks_per_tick: temp.subticks_per_tick,
+            market_type: temp.market_type,
+            open_interest_lower_cap: temp.open_interest_lower_cap,
+            open_interest_upper_cap: temp.open_interest_upper_cap,
+            base_open_interest: temp.base_open_interest,
+        };
+        perpetual_market_response_object.min_order_size = perpetual_market_response_object.quantums_to_size(perpetual_market_response_object.step_base_quantums);
+        Ok(perpetual_market_response_object)
+    }
+}
+
+impl PerpetualMarketResponseObject {
+    pub fn quantums_to_size(&self, quantums: i64) -> Decimal {
+        // let atomic_resolution = match atomic_resolution > 0 {
+        //     true => -self.atomic_resolution,
+        //     false => self.atomic_resolution,
+        // };
+        let quantums_decimal = Decimal::from(quantums);
+        let factor = Decimal::TEN.powi(self.atomic_resolution);
+        quantums_decimal * factor
+    }
+
+    pub fn get_maintenance_margin_requirement(&self, position_size: Decimal, price: Option<Decimal>) -> Decimal {
+        let price = match price {
+            Some(price) => price,
+            None => self.oracle_price,
+        };
+        (position_size * price * self.maintenance_margin_fraction).abs()
+    }
+
+    pub fn get_initial_margin_requirement(&self, position_size: Decimal, price: Option<Decimal>) -> Decimal {
+        let price = match price {
+            Some(price) => price,
+            None => self.oracle_price,
+        };
+        (position_size * price * self.initial_margin_fraction).abs()
+    }
+
+    fn round_down(x: Decimal, base: i64) -> Decimal {
+        let base_dec = Decimal::from(base);
+        // Compute floor(x / base) * base
+        (x / base_dec).floor() * base_dec
+    }
+
+    pub fn size_to_quantums(&self, size: Decimal) -> i64 {
+        // Step 1: Compute raw_quantums = size × 10^( -atomicResolution )
+        let factor = Decimal::new(10, 0).powi(-self.atomic_resolution);
+        let raw_quantums = size * factor;
+
+        // Step 2: Round down raw_quantums to the nearest multiple of stepBaseQuantums
+        let quantums_dec = Self::round_down(raw_quantums, self.step_base_quantums);
+
+        // Step 3: Convert quantums to integer
+        let quantums_int = quantums_dec.to_i64().unwrap();
+
+        // Step 4: Ensure quantums is at least stepBaseQuantums
+        cmp::max(quantums_int, self.step_base_quantums)
+    }
+
+    pub fn calculate_subticks(&self, price: Decimal) -> i64 {
+        // Step 1: Compute exponent = atomicResolution - quantumConversionExponent - QUOTE_QUANTUMS_ATOMIC_RESOLUTION
+        let exponent = self.atomic_resolution - self.quantum_conversion_exponent - QUOTE_QUANTUMS_ATOMIC_RESOLUTION;
+
+        // Step 2: Compute raw_subticks = price × 10^exponent
+        let factor = Decimal::new(10, 0).powi(exponent);
+        let raw_subticks = price * factor;
+
+        // Step 3: Round down raw_subticks to the nearest multiple of subticksPerTick
+        let subticks_dec = Self::round_down(raw_subticks, self.subticks_per_tick);
+
+        // Step 4: Convert subticks to integer
+        let subticks_int = subticks_dec.to_i64().unwrap();
+
+        // Step 5: Ensure subticks is at least subticksPerTick
+        cmp::max(subticks_int, self.subticks_per_tick)
+    }
+
+    pub fn round_order_size(&self, size: Decimal) -> Decimal {
+        let quantums = self.size_to_quantums(size);
+        self.quantums_to_size(quantums)
+    }
+
+    pub fn get_order_price(&self, price: Decimal) -> Decimal {
+        let subticks = self.calculate_subticks(price);
+        self.subticks_to_price(subticks)
+    }
+
+    pub fn subticks_to_price(&self, subticks: i64) -> Decimal {
+        let quantum_conversion_exponent = match self.quantum_conversion_exponent > 0 {
+            true => -self.quantum_conversion_exponent,
+            false => self.quantum_conversion_exponent,
+        };
+        // Step 1: Compute exponent = atomicResolution - quantumConversionExponent - USDC_ATOMIC_RESOLUTION
+        let exponent = self.atomic_resolution - quantum_conversion_exponent - USDC_ATOMIC_RESOLUTION;
+
+        // Step 2: Compute factor = 10^exponent
+        let base = Decimal::new(10, 0);
+        let factor = base.powi(exponent);
+
+        // Step 3: Compute price = subticks / factor
+        let subticks_dec = Decimal::from(subticks);
+        subticks_dec / factor
+    }
 }
 
 pub type PriceLevel = Vec<String>;
