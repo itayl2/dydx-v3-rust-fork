@@ -850,6 +850,7 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest_lower_cap: Option<String>,
     pub open_interest_upper_cap: Option<String>,
     pub base_open_interest: Decimal,
+    pub step_scale: usize,
 }
 
 impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
@@ -901,6 +902,7 @@ impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
             atomic_resolution: temp.atomic_resolution,
             quantum_conversion_exponent: temp.quantum_conversion_exponent,
             min_order_size: Decimal::ZERO,
+            step_scale: temp.step_size.to_f64().unwrap().recip().log10().round() as usize,
             tick_size: temp.tick_size,
             step_size: temp.step_size,
             step_base_quantums: temp.step_base_quantums,
