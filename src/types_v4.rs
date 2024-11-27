@@ -274,6 +274,28 @@ pub struct SubaccountResponseInnerObject {
     pub latest_processed_block_height: String,
 }
 
+impl SubaccountResponseInnerObject {
+    pub fn get_total_unrealized_pnl(&self) -> Decimal {
+        self.open_perpetual_positions
+            .values()
+            .map(|position| position.unrealized_pnl)
+            .sum()
+    }
+
+    pub fn get_total_value(&self) -> Decimal {
+        self.open_perpetual_positions
+            .values()
+            .map(|position| position.get_value())
+            .sum()
+    }
+
+    pub fn get_open_position_leverage(&self) -> Decimal {
+        let total_asset_value = self.get_total_value();
+        let total_unrealized_pnl = self.get_total_unrealized_pnl();
+        (total_asset_value + total_unrealized_pnl) / self.equity
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubaccountResponseObject {
@@ -348,6 +370,12 @@ pub struct PerpetualPositionResponseObject {
     pub closed_at: Option<String>,
     pub exit_price: Option<Decimal>,
     pub subaccount_number: i32,
+}
+
+impl PerpetualPositionResponseObject {
+    pub fn get_value(&self) -> Decimal {
+        self.size * self.entry_price
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
@@ -851,6 +879,26 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest_upper_cap: Option<String>,
     pub base_open_interest: Decimal,
     pub step_scale: usize,
+}
+
+impl PerpetualMarketResponseObject {
+    pub fn get_maintenance_margin_requirement(&self, position_size: Decimal, current_price: Option<Decimal>) -> Decimal {
+        let current_price = match current_price {
+            Some(price) => price,
+            None => self.oracle_price,
+        };
+        let position_value = position_size * current_price;
+        (position_value * self.maintenance_margin_fraction).abs()
+    }
+
+    pub fn get_initial_margin_requirement(&self, position_size: Decimal, current_price: Option<Decimal>) -> Decimal {
+        let current_price = match current_price {
+            Some(price) => price,
+            None => self.oracle_price,
+        };
+        let position_value = position_size * current_price;
+        (position_value * self.initial_margin_fraction).abs()
+    }
 }
 
 impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
