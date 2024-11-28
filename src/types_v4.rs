@@ -403,7 +403,7 @@ pub struct AssetPositionResponseObject {
 
 /**
 export interface ResponseWithBody extends express.Response {
-  body: unknown,
+  body: unknown,x
 }
  **/
 pub struct ResponseWithBody {
@@ -879,26 +879,6 @@ pub struct PerpetualMarketResponseObject {
     pub open_interest_upper_cap: Option<String>,
     pub base_open_interest: Decimal,
     pub step_scale: usize,
-}
-
-impl PerpetualMarketResponseObject {
-    pub fn get_maintenance_margin_requirement(&self, position_size: Decimal, current_price: Option<Decimal>) -> Decimal {
-        let current_price = match current_price {
-            Some(price) => price,
-            None => self.oracle_price,
-        };
-        let position_value = position_size * current_price;
-        (position_value * self.maintenance_margin_fraction).abs()
-    }
-
-    pub fn get_initial_margin_requirement(&self, position_size: Decimal, current_price: Option<Decimal>) -> Decimal {
-        let current_price = match current_price {
-            Some(price) => price,
-            None => self.oracle_price,
-        };
-        let position_value = position_size * current_price;
-        (position_value * self.initial_margin_fraction).abs()
-    }
 }
 
 impl<'de> Deserialize<'de> for PerpetualMarketResponseObject {
