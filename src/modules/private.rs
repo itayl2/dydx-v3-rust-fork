@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::Arc;
 use super::super::types_v4::*;
@@ -91,6 +92,13 @@ impl<'a> Private<'a> {
     pub async fn get_order_size(&self, params: OrderSizeParams) -> ResultWithSend<OrderSizeObject> {
         let response = self
             .internal_request("get_order_size", Method::GET, Vec::new(), params)
+            .await;
+        response
+    }
+
+    pub async fn report_bad_channel_url(&self, channel_url: String) -> ResultWithSend<HashMap<String, Value>> {
+        let response = self
+            .internal_request("report_bad_channel_url", Method::POST, Vec::new(), json!({"channel_url": channel_url}))
             .await;
         response
     }
