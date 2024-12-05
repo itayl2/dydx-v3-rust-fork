@@ -185,6 +185,7 @@ impl OrderType {
 pub enum APITimeInForce {
     GTT,
     IOC,
+    FOK,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
