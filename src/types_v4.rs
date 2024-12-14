@@ -239,7 +239,7 @@ impl APIOrderStatus {
     pub fn first() -> Self {
         Self::BestEffortOpened
     }
-    
+
     pub fn get_verb(&self) -> String {
         match self {
             Self::Untriggered => "created",
@@ -335,6 +335,26 @@ impl SubaccountResponseInnerObject {
         let total_unrealized_pnl = self.get_total_unrealized_pnl();
         (total_asset_value + total_unrealized_pnl) / self.equity
     }
+
+    pub fn get_equity(&self) -> Decimal {
+        self.equity
+    }
+
+    pub fn get_free_collateral(&self) -> Decimal {
+        self.free_collateral
+    }
+
+    pub fn get_all_positions(&self) -> Vec<PerpetualPositionResponseObject> {
+        self.open_perpetual_positions.values().cloned().collect()
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<PerpetualPositionResponseObject> {
+        self.open_perpetual_positions.get(symbol).cloned()
+    }
+
+    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+        self.get_position(symbol).map(|position| position.size)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -416,6 +436,22 @@ pub struct PerpetualPositionResponseObject {
 impl PerpetualPositionResponseObject {
     pub fn get_value(&self) -> Decimal {
         self.size * self.entry_price
+    }
+
+    pub fn get_size(&self) -> Decimal {
+        self.size
+    }
+
+    pub fn get_unrealized_pnl(&self) -> Decimal {
+        self.unrealized_pnl
+    }
+
+    pub fn is_short(&self) -> bool {
+        self.side == PositionSide::SHORT
+    }
+
+    pub fn get_market(&self) -> String {
+        self.market.clone()
     }
 }
 
