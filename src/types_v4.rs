@@ -70,6 +70,28 @@ pub struct ApiOrderParams {
     pub execution: Option<String>,
 }
 
+impl ApiOrderParams {
+    pub fn set_size(&mut self, size: Decimal) {
+        self.size = size;
+    }
+    
+    pub fn get_size(&self) -> Decimal {
+        self.size
+    }
+
+    pub fn get_price(&self) -> Decimal {
+        self.price
+    }
+
+    pub fn has_stop_price(&self) -> bool {
+        self.conditional_order_trigger_subticks.is_some()
+    }
+
+    pub fn get_market(&self) -> String {
+        self.market.clone()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CancelOrderParams {
@@ -179,6 +201,20 @@ impl OrderType {
             OrderType::TakeProfitMarket => true,
         }
     }
+
+    pub fn get_stop_values() -> Vec<OrderType> {
+        vec![
+            OrderType::StopLimit,
+            OrderType::StopMarket,
+        ]
+    }
+
+    pub fn get_take_profit_values() -> Vec<OrderType> {
+        vec![
+            OrderType::TakeProfit,
+            OrderType::TakeProfitMarket,
+        ]
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
@@ -200,6 +236,10 @@ pub enum APIOrderStatus {
 }
 
 impl APIOrderStatus {
+    pub fn first() -> Self {
+        Self::BestEffortOpened
+    }
+    
     pub fn get_verb(&self) -> String {
         match self {
             Self::Untriggered => "created",
