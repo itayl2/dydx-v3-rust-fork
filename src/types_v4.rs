@@ -414,6 +414,13 @@ impl SubaccountResponseInnerObject {
             None => Decimal::ZERO,
         }
     }
+
+    pub fn get_quote_balance(&self) -> Decimal {
+        match self.asset_positions.get("USDC") {
+            Some(position) => position.size.clone(),
+            None => Decimal::ZERO,
+        }
+    }
 }
 
 
