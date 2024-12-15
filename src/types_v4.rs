@@ -90,6 +90,10 @@ impl ApiOrderParams {
     pub fn get_market(&self) -> String {
         self.market.clone()
     }
+
+    pub fn get_client_id(&self) -> String {
+        self.client_id.clone()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -169,6 +173,22 @@ impl OrderResponseObject {
                 Some(0)
             }
         }
+    }
+
+    pub fn get_client_id(&self) -> String {
+        self.client_id.clone()
+    }
+
+    pub fn get_raw_order_id(&self) -> String {
+        self.id.clone()
+    }
+
+    pub fn get_order_id(&self) -> String {
+        self.id.clone()
+    }
+
+    pub fn get_market(&self) -> String {
+        self.ticker.clone()
     }
 }
 
@@ -388,8 +408,8 @@ impl Default for SubaccountResponseInnerObject {
 }
 
 impl SubaccountResponseInnerObject {
-    pub fn get_quote_balance(&self) -> Decimal {
-        match self.asset_positions.get("USDC") {
+    pub fn get_asset_balance(&self, asset: &str) -> Decimal {
+        match self.asset_positions.get(asset) {
             Some(position) => position.size.clone(),
             None => Decimal::ZERO,
         }
@@ -452,6 +472,10 @@ impl PerpetualPositionResponseObject {
 
     pub fn get_market(&self) -> String {
         self.market.clone()
+    }
+
+    pub fn get_side(&self) -> PositionSide {
+        self.side.clone()
     }
 }
 
