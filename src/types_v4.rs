@@ -94,6 +94,10 @@ impl ApiOrderParams {
     pub fn get_client_id(&self) -> String {
         self.client_id.clone()
     }
+    
+    pub fn get_intended_price(&self) -> Decimal {
+        self.price
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
