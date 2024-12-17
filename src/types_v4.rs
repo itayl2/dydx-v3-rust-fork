@@ -1126,12 +1126,12 @@ impl PerpetualMarketResponseObject {
 
     pub fn round_order_size(&self, size: Decimal) -> Decimal {
         let quantums = self.size_to_quantums(size);
-        self.quantums_to_size(quantums)
+        self.quantums_to_size(quantums).normalize()
     }
 
     pub fn get_order_price(&self, price: Decimal) -> Decimal {
         let subticks = self.calculate_subticks(price);
-        self.subticks_to_price(subticks)
+        self.subticks_to_price(subticks).normalize()
     }
 
     pub fn subticks_to_price(&self, subticks: i64) -> Decimal {
