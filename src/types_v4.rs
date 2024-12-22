@@ -466,7 +466,7 @@ pub struct PerpetualPositionResponseObject {
 
 impl PerpetualPositionResponseObject {
     pub fn get_value(&self) -> Decimal {
-        self.size * self.entry_price
+        self.size * self.get_entry_price()
     }
 
     pub fn get_size(&self) -> Decimal {
@@ -487,6 +487,10 @@ impl PerpetualPositionResponseObject {
 
     pub fn get_side(&self) -> PositionSide {
         self.side.clone()
+    }
+    
+    pub fn get_entry_price(&self) -> Decimal {
+        self.entry_price
     }
 }
 
