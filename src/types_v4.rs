@@ -246,6 +246,7 @@ pub enum APITimeInForce {
     GTT,
     IOC,
     FOK,
+    None,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
