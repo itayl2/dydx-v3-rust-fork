@@ -685,6 +685,20 @@ pub struct FillResponseObject {
     pub subaccount_number: i32,
 }
 
+impl FillResponseObject {
+    pub fn get_order_id(&self) -> String {
+        self.order_id.clone().unwrap_or_default()
+    }
+
+    pub fn get_market(&self) -> String {
+        self.market.clone()
+    }
+
+    pub fn get_price_or_zero(&self) -> Decimal {
+        self.price
+    }
+}
+
 /**
 export interface TransferResponse extends PaginationResponse {
   transfers: TransferResponseObject[],
