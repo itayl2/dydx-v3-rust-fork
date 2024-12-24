@@ -58,6 +58,8 @@ pub struct ApiOrderParams {
     pub order_type: OrderType,
     pub size: Decimal,
     pub price: Decimal,
+    #[serde(skip_serializing, default)]
+    pub intended_price: Decimal,
     pub time_in_force: APITimeInForce,
     pub client_id: String,
     pub reduce_only: bool,
@@ -96,7 +98,7 @@ impl ApiOrderParams {
     }
     
     pub fn get_intended_price(&self) -> Decimal {
-        self.price
+        self.intended_price
     }
 }
 
