@@ -483,6 +483,10 @@ impl PerpetualPositionResponseObject {
     pub fn is_short(&self) -> bool {
         self.side == PositionSide::SHORT
     }
+    
+    pub fn is_long(&self) -> bool {
+        self.side == PositionSide::LONG
+    }
 
     pub fn get_market(&self) -> String {
         self.market.clone()
