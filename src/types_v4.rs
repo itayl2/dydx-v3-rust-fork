@@ -282,6 +282,10 @@ impl APIOrderStatus {
         Self::get_open_statuses().contains(self)
     }
 
+    pub fn get_canceled_statuses() -> Vec<Self> {
+        vec![Self::Canceled, Self::BestEffortCanceled]
+    }
+
     pub fn get_open_statuses() -> Vec<Self> {
         vec![Self::BestEffortOpened, Self::Open, Self::Untriggered]
     }
