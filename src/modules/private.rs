@@ -125,7 +125,8 @@ impl<'a> Private<'a> {
     }
 
     pub async fn get_equity_tiers(&self) -> ResultWithSend<EquityTiersResponse> {
-        let response = self.internal_request("get_equity_tiers", Method::GET, Vec::new(), None).await;
+        let data: Option<Vec<String>> = None;
+        let response = self.internal_request("get_equity_tiers", Method::GET, Vec::new(), data).await;
         response
     }
 
