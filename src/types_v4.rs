@@ -23,6 +23,36 @@ pub type CancelOrderResponse = InternalApiResponse;
 pub type CancelOrderResponse = OrderResponseObject;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EquityTierItem {
+    usd_tnc_required: Decimal,
+    tier: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EquityTierLimitConfig {
+    short_term_order_equity_tiers: Vec<EquityTierItem>,
+    stateful_order_equity_tiers: Vec<EquityTierItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EquityTiersResponse {
+    equity_tier_limit_config: EquityTierLimitConfig,
+}
+
+impl EquityTiersResponse {
+    pub fn get_stateful_equity_tier_limit(&self, equity: Decimal) -> u64 {
+        let mut highest_order_count_limit = 0;
+        for tier_item in self.equity_tier_limit_config.stateful_order_equity_tiers.iter() {
+            let tier_order_count_limit = tier_item.tier.unwrap_or_else(|| 0);
+            if equity >= tier_item.usd_tnc_required  && tier_order_count_limit > highest_order_count_limit {
+                highest_order_count_limit = tier_order_count_limit;
+            }
+        }
+        highest_order_count_limit
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderSizeParams {
     pub market: String,

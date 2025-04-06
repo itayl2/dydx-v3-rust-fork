@@ -124,6 +124,11 @@ impl<'a> Private<'a> {
         response
     }
 
+    pub async fn get_equity_tiers(&self) -> ResultWithSend<EquityTiersResponse> {
+        let response = self.internal_request("get_equity_tiers", Method::GET, Vec::new(), None).await;
+        response
+    }
+
     pub async fn get_orders(
         &self,
         ticker: Option<&str>,
