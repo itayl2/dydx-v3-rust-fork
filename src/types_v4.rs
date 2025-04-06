@@ -25,7 +25,7 @@ pub type CancelOrderResponse = OrderResponseObject;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EquityTierItem {
     usd_tnc_required: Decimal,
-    tier: Option<u64>,
+    limit: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,7 +43,7 @@ impl EquityTiersResponse {
     pub fn get_stateful_equity_tier_limit(&self, equity: Decimal) -> u64 {
         let mut highest_order_count_limit = 0;
         for tier_item in self.equity_tier_limit_config.stateful_order_equity_tiers.iter() {
-            let tier_order_count_limit = tier_item.tier.unwrap_or_else(|| 0);
+            let tier_order_count_limit = tier_item.limit.unwrap_or_else(|| 0);
             if equity >= tier_item.usd_tnc_required  && tier_order_count_limit > highest_order_count_limit {
                 highest_order_count_limit = tier_order_count_limit;
             }
