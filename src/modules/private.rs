@@ -277,6 +277,7 @@ impl<'a> Private<'a> {
         response
     }
 
+    #[allow(dead_code)]
     async fn put(&self, path: &str) -> Result<StatusCode> {
         let url = format!("{}/v3/{}", &self.host, path);
         let req_builder = self.client.put(url);

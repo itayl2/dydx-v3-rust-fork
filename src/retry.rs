@@ -2,7 +2,6 @@ use std::error::Error;
 use std::fmt;
 use std::fmt::Debug;
 use std::time::Duration;
-use serde::Deserializer;
 use backon::ExponentialBuilder;
 
 pub trait ErrorHandler {

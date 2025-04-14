@@ -67,9 +67,13 @@ impl OrderType {
 pub enum OrderTypeEnum {
     MARKET,
     LIMIT,
+    #[allow(non_camel_case_types)]
     STOP_LIMIT,
+    #[allow(non_camel_case_types)]
     STOP_MARKET,
+    #[allow(non_camel_case_types)]
     TRAILING_STOP,
+    #[allow(non_camel_case_types)]
     TAKE_PROFIT,
 }
 

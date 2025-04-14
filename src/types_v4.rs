@@ -1031,8 +1031,11 @@ pub struct PerpetualMarketResponseObject {
     pub ticker: String,
     pub status: PerpetualMarketStatus,
     pub oracle_price: Decimal,
+    #[allow(non_snake_case)]
     pub price_change24H: Decimal,
+    #[allow(non_snake_case)]
     pub volume24H: Decimal,
+    #[allow(non_snake_case)]
     pub trades24H: i64,
     pub next_funding_rate: Decimal,
     pub initial_margin_fraction: Decimal,
@@ -2294,7 +2297,9 @@ export enum TransferType {
  **/
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, PartialEq, Eq, Hash)]
 pub enum TransferType {
+    #[allow(non_camel_case_types)]
     TRANSFER_IN,
+    #[allow(non_camel_case_types)]
     TRANSFER_OUT,
     DEPOSIT,
     WITHDRAWAL,
@@ -2346,9 +2351,12 @@ export enum PerpetualMarketStatus {
 pub enum PerpetualMarketStatus {
     ACTIVE,
     PAUSED,
+    #[allow(non_camel_case_types)]
     CANCEL_ONLY,
+    #[allow(non_camel_case_types)]
     POST_ONLY,
     INITIALIZING,
+    #[allow(non_camel_case_types)]
     FINAL_SETTLEMENT,
 }
 
@@ -2463,8 +2471,11 @@ export enum ComplianceStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum ComplianceStatus {
     COMPLIANT,
+    #[allow(non_camel_case_types)]
     FIRST_STRIKE_CLOSE_ONLY,
+    #[allow(non_camel_case_types)]
     FIRST_STRIKE,
+    #[allow(non_camel_case_types)]
     CLOSE_ONLY,
     BLOCKED,
 }
@@ -2482,10 +2493,15 @@ export enum ComplianceReason {
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString)]
 pub enum ComplianceReason {
     MANUAL,
+    #[allow(non_camel_case_types)]
     US_GEO,
+    #[allow(non_camel_case_types)]
     CA_GEO,
+    #[allow(non_camel_case_types)]
     GB_GEO,
+    #[allow(non_camel_case_types)]
     SANCTIONED_GEO,
+    #[allow(non_camel_case_types)]
     COMPLIANCE_PROVIDER,
 }
 
