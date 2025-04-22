@@ -158,7 +158,7 @@ pub struct OrderResponse {
     pub order: OrderResponseObject,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderResponseObject {
     pub id: String,
