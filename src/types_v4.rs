@@ -235,6 +235,15 @@ pub enum OrderSide {
     Sell,
 }
 
+impl OrderSide {
+    pub fn get_opposite(&self) -> Self {
+        match self {
+            Self::Buy => Self::Sell,
+            Self::Sell => Self::Buy,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
@@ -546,6 +555,15 @@ pub enum PerpetualPositionStatus {
 pub enum PositionSide {
     LONG,
     SHORT,
+}
+
+impl PositionSide {
+    pub fn get_opposite(&self) -> Self {
+        match self {
+            Self::LONG => Self::SHORT,
+            Self::SHORT => Self::LONG,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
