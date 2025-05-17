@@ -111,8 +111,8 @@ impl ApiOrderParams {
         self.size
     }
 
-    pub fn get_price(&self) -> Decimal {
-        self.price
+    pub fn get_price(&self) -> Option<Decimal> {
+        Some(self.price)
     }
 
     pub fn has_stop_price(&self) -> bool {
@@ -288,6 +288,12 @@ pub enum APITimeInForce {
     IOC,
     FOK,
     None,
+}
+
+impl Default for APITimeInForce {
+    fn default() -> Self {
+        Self::GTT
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
@@ -511,6 +517,10 @@ pub struct PerpetualPositionResponseObject {
 }
 
 impl PerpetualPositionResponseObject {
+    pub fn get_created_timestamp(&self) -> String {
+        self.created_at.clone()
+    }
+    
     pub fn get_value(&self) -> Decimal {
         self.size * self.get_entry_price()
     }
