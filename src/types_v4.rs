@@ -766,6 +766,10 @@ impl FillResponseObject {
     pub fn get_price_or_zero(&self) -> Decimal {
         self.price
     }
+    
+    pub fn get_size(&self) -> Decimal {
+        self.size
+    }
 }
 
 /**
