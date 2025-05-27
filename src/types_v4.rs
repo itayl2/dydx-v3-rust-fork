@@ -226,6 +226,14 @@ impl OrderResponseObject {
     pub fn get_market(&self) -> String {
         self.ticker.clone()
     }
+
+    pub fn get_optional_filled_price(&self) -> Option<Decimal> {
+        Some(self.price)
+    }
+
+    pub fn get_size(&self) -> Decimal {
+        self.size
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
@@ -573,6 +581,14 @@ impl PositionSide {
             Self::LONG => Self::SHORT,
             Self::SHORT => Self::LONG,
         }
+    }
+
+    pub fn is_short(&self) -> bool {
+        self == &Self::SHORT
+    }
+
+    pub fn is_long(&self) -> bool {
+        self == &Self::LONG
     }
 }
 
