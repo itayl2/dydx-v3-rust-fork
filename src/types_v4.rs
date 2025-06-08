@@ -455,6 +455,40 @@ impl Default for SubaccountResponseObject {
     }
 }
 
+impl SubaccountResponseObject {
+    pub fn get_total_unrealized_pnl(&self) -> Decimal {
+        self.subaccount.get_total_unrealized_pnl()
+    }
+
+    pub fn get_total_value(&self) -> Decimal {
+        self.subaccount.get_total_value()
+    }
+
+    pub fn get_open_position_leverage(&self) -> Decimal {
+        self.subaccount.get_open_position_leverage()
+    }
+
+    pub fn get_equity(&self) -> Decimal {
+        self.subaccount.get_equity()
+    }
+
+    pub fn get_free_collateral(&self) -> Decimal {
+        self.subaccount.get_free_collateral()
+    }
+
+    pub fn get_all_positions(&self) -> Vec<PerpetualPositionResponseObject> {
+        self.subaccount.get_all_positions()
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<PerpetualPositionResponseObject> {
+        self.subaccount.get_position(symbol)
+    }
+
+    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+        self.subaccount.get_position_size(symbol)
+    }
+}
+
 impl Default for SubaccountResponseInnerObject {
     fn default() -> Self {
         Self {
