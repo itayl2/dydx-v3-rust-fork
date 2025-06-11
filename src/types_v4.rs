@@ -415,6 +415,9 @@ impl SubaccountResponseInnerObject {
     }
 
     pub fn get_open_position_leverage(&self) -> Decimal {
+        if self.equity.is_zero() {
+            return Decimal::ZERO;
+        }
         let total_asset_value = self.get_total_value();
         let total_unrealized_pnl = self.get_total_unrealized_pnl();
         (total_asset_value + total_unrealized_pnl) / self.equity
