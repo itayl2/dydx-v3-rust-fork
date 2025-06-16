@@ -1858,7 +1858,7 @@ export interface CandleRequest extends LimitRequest {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CandleRequest {
-    pub limit: f64,
+    pub limit: u16,
     pub ticker: String,
     pub resolution: CandleResolution,
     pub from_iso: Option<String>,
@@ -1868,7 +1868,7 @@ pub struct CandleRequest {
 impl Default for CandleRequest {
     fn default() -> Self {
         CandleRequest {
-            limit: 100.0,
+            limit: 100,
             ticker: String::new(),
             resolution: CandleResolution::OneMin,
             from_iso: None,
