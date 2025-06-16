@@ -1865,6 +1865,18 @@ pub struct CandleRequest {
     pub to_iso: Option<String>,
 }
 
+impl Default for CandleRequest {
+    fn default() -> Self {
+        CandleRequest {
+            limit: 100.0,
+            ticker: String::new(),
+            resolution: CandleResolution::OneMin,
+            from_iso: None,
+            to_iso: None,
+        }
+    }
+}
+
 /**
 export interface SparklinesRequest {
   timePeriod: SparklineTimePeriod,
