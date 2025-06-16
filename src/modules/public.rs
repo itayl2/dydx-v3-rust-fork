@@ -7,7 +7,8 @@ use serde::Deserialize;
 use std::time::Duration;
 use backon::Retryable;
 use crate::retry::{ExponentialBuilderHelperGet, ErrorFn};
-use crate::types_v4::PerpetualMarketResponse;
+use crate::to_serde_string::ToSerdeString;
+use crate::types_v4::{CandleRequest, CandleResponse, PerpetualMarketResponse};
 pub use super::super::types::*;
 
 #[readonly::make]
@@ -125,25 +126,18 @@ impl<'a> Public<'a> {
 
     pub async fn get_candles(
         &self,
-        market: &str,
-        resolution: Option<&str>,
-        from_iso: Option<&str>,
-        to_iso: Option<&str>,
-        limit: Option<&str>,
-    ) -> Result<CandlesResponse> {
-        let path = format!("candles/{}", market);
-        let mut parameters = Vec::new();
-        if let Some(local_var) = resolution {
-            parameters.push(("resolution", local_var));
-        }
-        if let Some(local_var) = from_iso {
+        params: CandleRequest,
+    ) -> Result<CandleResponse> {
+        let path = format!("candles/perpetualMarkets/{}", params.ticker);
+        let mut parameters = Vec::from([("resolution", params.resolution.to_serde_string())]);
+        if let Some(local_var) = params.from_iso {
             parameters.push(("fromISO", local_var));
         }
-        if let Some(local_var) = to_iso {
+        if let Some(local_var) = params.to_iso {
             parameters.push(("toISO", local_var));
         }
-        if let Some(local_var) = limit {
-            parameters.push(("limit", local_var));
+        if let Some(local_var) = params.limit {
+            parameters.push(("limit", local_var.to_string()));
         }
 
         let response = self.get_retry_wrapper(path.as_str(), parameters, Some("get_candles")).await;

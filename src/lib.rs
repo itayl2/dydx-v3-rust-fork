@@ -7,6 +7,7 @@ pub mod types;
 pub mod retry;
 pub mod types_v4;
 pub mod error_with_send;
+pub mod to_serde_string;
 
 pub use dydx_client::ClientOptions;
 pub use dydx_client::DydxClient;

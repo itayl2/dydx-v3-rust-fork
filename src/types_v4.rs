@@ -2,10 +2,12 @@ use std::any::Any;
 use std::cmp;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
+use anyhow::anyhow;
 use chrono::DateTime;
 use rust_decimal::{Decimal, MathematicalOps};
 use rust_decimal::prelude::ToPrimitive;
 use strum_macros::{Display, EnumString};
+use crate::ResultWithSend;
 
 pub type OrdersResponse = Vec<OrderResponseObject>;
 
@@ -1358,13 +1360,47 @@ pub struct CandleResponseObject {
     pub high: Decimal,
     pub open: Decimal,
     pub close: Decimal,
-    pub base_token_volume: String,
-    pub usd_volume: String,
+    pub base_token_volume: Decimal,
+    pub usd_volume: Decimal,
     pub trades: i64,
     pub starting_open_interest: String,
     pub open_interest: String,
     pub closing_open_interest: String,
     pub ordering_bookmark: Option<String>,
+}
+
+impl CandleResponseObject {
+    pub fn get_open(&self) -> Decimal {
+        self.open
+    }
+
+    pub fn get_high(&self) -> Decimal {
+        self.high
+    }
+
+    pub fn get_low(&self) -> Decimal {
+        self.low
+    }
+
+    pub fn get_close(&self) -> Decimal {
+        self.close
+    }
+
+    pub fn get_quote_volume(&self) -> Decimal {
+        self.usd_volume
+    }
+
+    pub fn get_base_volume(&self) -> Decimal {
+        self.base_token_volume
+    }
+
+    pub fn get_timestamp(&self) -> ResultWithSend<u64> {
+        let parsed_datetime = DateTime::parse_from_rfc3339(&self.started_at);
+        match parsed_datetime {
+            Ok(datetime) => Ok(datetime.timestamp() as u64),
+            Err(error) => Err(anyhow!("Failed to parse datetime string {}: {error:?}", self.started_at).into()),
+        }
+    }
 }
 
 /**
