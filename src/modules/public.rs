@@ -129,15 +129,15 @@ impl<'a> Public<'a> {
         params: CandleRequest,
     ) -> Result<CandleResponse> {
         let path = format!("candles/perpetualMarkets/{}", params.ticker);
-        let mut parameters = Vec::from([("resolution", params.resolution.to_serde_string())]);
+        let mut parameters = Vec::from([
+            ("resolution", params.resolution.to_serde_string()),
+            ("limit", params.limit.to_string()),
+        ]);
         if let Some(local_var) = params.from_iso {
             parameters.push(("fromISO", local_var));
         }
         if let Some(local_var) = params.to_iso {
             parameters.push(("toISO", local_var));
-        }
-        if let Some(local_var) = params.limit {
-            parameters.push(("limit", local_var.to_string()));
         }
 
         let response = self.get_retry_wrapper(path.as_str(), parameters, Some("get_candles")).await;
