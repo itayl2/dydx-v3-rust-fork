@@ -1342,7 +1342,7 @@ export interface CandleResponse {
   candles: CandleResponseObject[],
 }
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CandleResponse {
     pub candles: Vec<CandleResponseObject>,
 }
@@ -1350,7 +1350,7 @@ pub struct CandleResponse {
 /**
 export interface CandleResponseObject extends Omit<CandleFromDatabase, CandleColumns.id> {}
  **/
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CandleResponseObject {
     pub started_at: String,

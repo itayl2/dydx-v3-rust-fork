@@ -129,14 +129,18 @@ impl<'a> Public<'a> {
         params: CandleRequest,
     ) -> Result<CandleResponse> {
         let path = format!("candles/perpetualMarkets/{}", params.ticker);
+        let resolution = params.resolution.to_serde_string();
+        let limit = params.limit.to_string();
         let mut parameters = Vec::from([
-            ("resolution", params.resolution.to_serde_string()),
-            ("limit", params.limit.to_string()),
+            ("resolution", resolution.as_str()),
+            ("limit", limit.as_str()),
         ]);
-        if let Some(local_var) = params.from_iso {
+        let from_iso = params.from_iso.as_ref().map(String::as_str);
+        let to_iso = params.to_iso.as_ref().map(String::as_str);
+        if let Some(local_var) = from_iso {
             parameters.push(("fromISO", local_var));
         }
-        if let Some(local_var) = params.to_iso {
+        if let Some(local_var) = to_iso {
             parameters.push(("toISO", local_var));
         }
 
