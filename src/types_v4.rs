@@ -1364,9 +1364,8 @@ pub struct CandleResponseObject {
     pub usd_volume: Decimal,
     pub trades: i64,
     pub starting_open_interest: String,
-    pub open_interest: String,
-    pub closing_open_interest: String,
-    pub ordering_bookmark: Option<String>,
+    pub orderbook_mid_price_open: Option<Decimal>,
+    pub orderbook_mid_price_close: Option<Decimal>,
 }
 
 impl CandleResponseObject {
