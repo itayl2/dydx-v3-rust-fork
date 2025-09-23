@@ -568,6 +568,10 @@ pub struct PerpetualPositionResponseObject {
 }
 
 impl PerpetualPositionResponseObject {
+    pub fn get_name(&self) -> String {
+        format!("{}:{}", self.get_market(), self.get_side())
+    }
+
     pub fn get_created_timestamp(&self) -> String {
         self.created_at.clone()
     }
