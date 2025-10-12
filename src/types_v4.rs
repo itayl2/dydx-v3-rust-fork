@@ -445,7 +445,7 @@ impl SubaccountResponseInnerObject {
         self.open_perpetual_positions.get(symbol).cloned()
     }
 
-    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+    pub fn get_position_size(&self, symbol: &str, _: PositionSide) -> Option<Decimal> {
         self.get_position(symbol).map(|position| position.size)
     }
 }
@@ -493,8 +493,8 @@ impl SubaccountResponseObject {
         self.subaccount.get_position(symbol)
     }
 
-    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
-        self.subaccount.get_position_size(symbol)
+    pub fn get_position_size(&self, symbol: &str, position_side: PositionSide) -> Option<Decimal> {
+        self.subaccount.get_position_size(symbol, position_side)
     }
 }
 
