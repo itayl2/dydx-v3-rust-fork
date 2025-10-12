@@ -441,12 +441,12 @@ impl SubaccountResponseInnerObject {
         self.open_perpetual_positions.values().cloned().filter(|position| position.market == symbol).collect()
     }
 
-    pub fn get_position(&self, symbol: &str) -> Option<PerpetualPositionResponseObject> {
+    pub fn get_position(&self, symbol: &str, _: PositionSide) -> Option<PerpetualPositionResponseObject> {
         self.open_perpetual_positions.get(symbol).cloned()
     }
 
-    pub fn get_position_size(&self, symbol: &str, _: PositionSide) -> Option<Decimal> {
-        self.get_position(symbol).map(|position| position.size)
+    pub fn get_position_size(&self, symbol: &str, position_side: PositionSide) -> Option<Decimal> {
+        self.get_position(symbol, position_side).map(|position| position.size)
     }
 }
 
@@ -489,8 +489,8 @@ impl SubaccountResponseObject {
         self.subaccount.get_all_positions()
     }
 
-    pub fn get_position(&self, symbol: &str) -> Option<PerpetualPositionResponseObject> {
-        self.subaccount.get_position(symbol)
+    pub fn get_position(&self, symbol: &str, position_side: PositionSide) -> Option<PerpetualPositionResponseObject> {
+        self.subaccount.get_position(symbol, position_side)
     }
 
     pub fn get_position_size(&self, symbol: &str, position_side: PositionSide) -> Option<Decimal> {
