@@ -622,6 +622,12 @@ pub enum PositionSide {
     SHORT,
 }
 
+impl Default for PositionSide {
+    fn default() -> Self {
+        Self::LONG
+    }
+}
+
 impl PositionSide {
     pub fn get_opposite(&self) -> Self {
         match self {
