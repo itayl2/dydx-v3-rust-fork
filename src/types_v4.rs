@@ -104,6 +104,26 @@ pub struct ApiOrderParams {
     pub execution: Option<String>,
 }
 
+impl Default for ApiOrderParams {
+    fn default() -> Self {
+        Self {
+            market: String::default(),
+            side: OrderSide::Buy,
+            order_type: OrderType::Limit,
+            size: Decimal::ZERO,
+            price: Decimal::ZERO,
+            intended_price: Decimal::ZERO,
+            time_in_force: APITimeInForce::GTT,
+            client_id: String::default(),
+            reduce_only: false,
+            good_til_block_time: 0,
+            conditional_order_trigger_subticks: None,
+            post_only: None,
+            execution: None,
+        }
+    }
+}
+
 impl ApiOrderParams {
     pub fn set_size(&mut self, size: Decimal) {
         self.size = size;
